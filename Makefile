@@ -1,0 +1,2 @@
+CXX = g++
+CXXFLAGS = -std=c++23 -O2 -Wall -Wextra -g
