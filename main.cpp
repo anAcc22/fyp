@@ -12,8 +12,21 @@
 #include <string>
 #include <map>
 
+template <typename T>
+T ceiling_square_root(T x) {
+    T low = 0, high = sqrt(x), ans = -1;
+    while (low <= high) {
+        auto mid = std::midpoint(low, high);
+        if (mid * mid < x) ans = mid, low = mid + 1;
+        else high = mid - 1;
+    }
+    return ans + 1;
+}
+
 constexpr auto SEED = 42;
-std::mt19937_64 randomiser(SEED);
+
+std::mt19937_64 point_generator_randomiser(SEED);
+std::mt19937_64 point_selector_randomiser(SEED);
 
 using Dimensions = int;
 
@@ -62,8 +75,8 @@ std::vector<Point> generate_points(Generator params) {
     std::vector<Point> points(params.point_count);
     std::uniform_int_distribution coord_generator(params.min_value, params.max_value);
     for (auto &[x, y] : points) {
-        x = coord_generator(randomiser);
-        y = coord_generator(randomiser);
+        x = coord_generator(point_generator_randomiser);
+        y = coord_generator(point_generator_randomiser);
     }
     return cached_points[params] = points;
 }
@@ -154,6 +167,67 @@ ClosestPair divide_and_conquer(std::vector<Point> points) {
     return closest_pair;
 }
 
+struct GridSquare {
+    long long x, y;
+    friend auto operator<=>(GridSquare, GridSquare) = default;
+};
+
+ClosestPair grid_decomposition(std::vector<Point> points) {
+    auto n = points.size();
+    ClosestPair closest_pair{};
+    closest_pair.gap = std::numeric_limits<long long>::max();
+
+    long long grid_width = std::numeric_limits<long long>::max();
+    std::uniform_int_distribution index_generator(0uz, n - 1);
+
+    for (auto _ : std::views::iota(0uz, n)) {
+        auto i = index_generator(point_selector_randomiser);
+        auto j = index_generator(point_selector_randomiser);
+
+        if (i == j) continue;
+
+        auto point_a = points[i], point_b = points[j];
+
+        grid_width = std::min(grid_width, ceiling_square_root(squared_euclidean_distance_between(point_a, point_b)));
+    }
+
+    std::map<GridSquare, std::vector<Point>> points_by_square;
+
+    for (auto point : points) {
+        auto square_x = point.x / grid_width, square_y = point.y / grid_width;
+        points_by_square[{ square_x, square_y }].push_back(point);
+    }
+
+    for (const auto &[square, inner_points] : points_by_square) {
+        auto cnt = inner_points.size();
+
+        for (auto i : std::views::iota(0uz, cnt)) {
+            for (auto j : std::views::iota(i + 1, cnt)) {
+                attempt_to_improve(closest_pair, inner_points[i], inner_points[j]);
+            }
+        }
+
+        auto offset_range = { -1, 0, 1 };
+
+        for (auto [offset_x, offset_y] : std::views::cartesian_product(offset_range, offset_range)) {
+            if (offset_x == 0 && offset_y == 0) continue;
+
+            auto outer_square_x = square.x + offset_x, outer_square_y = square.y + offset_y;
+            GridSquare outer_square{ outer_square_x, outer_square_y };
+
+            if (!points_by_square.contains(outer_square)) continue;
+
+            const auto &outer_points = points_by_square[outer_square];
+
+            for (auto [point_a, point_b] : std::views::cartesian_product(inner_points, outer_points)) {
+                attempt_to_improve(closest_pair, point_a, point_b);
+            }
+        }
+    }
+
+    return closest_pair;
+}
+
 struct RunStatistics {
     ClosestPair closest_pair;
     std::chrono::duration<double> time_taken;
@@ -170,20 +244,24 @@ RunStatistics time_taken_by(auto solver, Generator params) {
 int main() {
     std::locale::global(std::locale("en_US.UTF-8"));
 
-    std::vector point_counts{ 20'000, 40'000, 60'000, 80'000 };
+    std::vector point_counts{ 200'000, 400'000, 600'000, 800'000 };
+
+    // for (auto n : point_counts) {
+    //     auto stats                      = time_taken_by(examine_all_pairs, generator_for(n, Dimensions{ 2 }));
+    //     auto [closest_pair, time_taken] = stats;
+    //     std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    // }
+    // std::println();
 
     for (auto n : point_counts) {
-        auto stats = time_taken_by(examine_all_pairs, generator_for(n, Dimensions{ 2 }));
-
+        auto stats                      = time_taken_by(divide_and_conquer, generator_for(n, Dimensions{ 2 }));
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
-
     std::println();
 
     for (auto n : point_counts) {
-        auto stats = time_taken_by(divide_and_conquer, generator_for(n, Dimensions{ 2 }));
-
+        auto stats                      = time_taken_by(grid_decomposition, generator_for(n, Dimensions{ 2 }));
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
