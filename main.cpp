@@ -8,6 +8,8 @@
 #include <format>
 #include <print>
 #include <random>
+#include <set>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include <map>
@@ -167,9 +169,57 @@ ClosestPair divide_and_conquer(std::vector<Point> points) {
     return closest_pair;
 }
 
+ClosestPair sweepline(std::vector<Point> points) {
+    auto n = points.size();
+    ClosestPair closest_pair{};
+    closest_pair.gap = std::numeric_limits<long long>::max();
+
+    auto temporary_storage(points);
+    std::ranges::sort(points);
+
+    struct y_comparator {
+        bool operator()(Point point_a, Point point_b) const { return point_a.y < point_b.y; }
+    };
+
+    std::set<Point, y_comparator> candidates;
+
+    for (auto i = 0uz; auto j : std::views::iota(0uz, n)) {
+        auto cur_point = points[j];
+
+        while (i < j && squared_distance(cur_point, points[i], Axis::X) >= closest_pair.gap) {
+            candidates.erase(points[i++]);
+        }
+
+        int y_difference = ceiling_square_root(closest_pair.gap);
+        auto iter_start  = candidates.lower_bound(Point{ 0, cur_point.y - y_difference });
+        auto iter_end    = candidates.upper_bound(Point{ 0, cur_point.y + y_difference });
+
+        for (auto iter = iter_start; iter != iter_end; iter++) {
+            attempt_to_improve(closest_pair, cur_point, *iter);
+        }
+
+        candidates.insert(cur_point);
+    }
+
+    return closest_pair;
+}
+
 struct GridSquare {
     long long x, y;
     friend auto operator<=>(GridSquare, GridSquare) = default;
+};
+
+template <>
+struct std::hash<GridSquare> {
+    size_t operator()(GridSquare square) const noexcept {
+        auto mix = [](unsigned long long x) {
+            x += 0x9e3779b97f4a7c15;
+            x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+            x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+            return x ^ (x >> 31);
+        };
+        return mix(square.x) ^ (mix(square.y) << 1);
+    }
 };
 
 ClosestPair grid_decomposition(std::vector<Point> points) {
@@ -177,7 +227,7 @@ ClosestPair grid_decomposition(std::vector<Point> points) {
     ClosestPair closest_pair{};
     closest_pair.gap = std::numeric_limits<long long>::max();
 
-    long long grid_width = std::numeric_limits<long long>::max();
+    long long grid_width_squared = std::numeric_limits<long long>::max();
     std::uniform_int_distribution index_generator(0uz, n - 1);
 
     for (auto _ : std::views::iota(0uz, n)) {
@@ -188,10 +238,13 @@ ClosestPair grid_decomposition(std::vector<Point> points) {
 
         auto point_a = points[i], point_b = points[j];
 
-        grid_width = std::min(grid_width, ceiling_square_root(squared_euclidean_distance_between(point_a, point_b)));
+        grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
     }
 
-    std::map<GridSquare, std::vector<Point>> points_by_square;
+    auto grid_width = ceiling_square_root(grid_width_squared);
+
+    std::unordered_map<GridSquare, std::vector<Point>> points_by_square;
+    points_by_square.reserve(n);
 
     for (auto point : points) {
         auto square_x = point.x / grid_width, square_y = point.y / grid_width;
@@ -207,17 +260,15 @@ ClosestPair grid_decomposition(std::vector<Point> points) {
             }
         }
 
-        auto offset_range = { -1, 0, 1 };
-
-        for (auto [offset_x, offset_y] : std::views::cartesian_product(offset_range, offset_range)) {
-            if (offset_x == 0 && offset_y == 0) continue;
+        for (auto [offset_x, offset_y] : { std::pair{ 1, -1 }, { 1, 0 }, { 1, 1 }, { 0, 1 } }) {
 
             auto outer_square_x = square.x + offset_x, outer_square_y = square.y + offset_y;
             GridSquare outer_square{ outer_square_x, outer_square_y };
 
-            if (!points_by_square.contains(outer_square)) continue;
+            auto iter = points_by_square.find(outer_square);
+            if (iter == end(points_by_square)) continue;
 
-            const auto &outer_points = points_by_square[outer_square];
+            const auto &outer_points = iter->second;
 
             for (auto [point_a, point_b] : std::views::cartesian_product(inner_points, outer_points)) {
                 attempt_to_improve(closest_pair, point_a, point_b);
@@ -251,6 +302,7 @@ int main() {
     //     auto [closest_pair, time_taken] = stats;
     //     std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     // }
+
     // std::println();
 
     for (auto n : point_counts) {
@@ -258,13 +310,22 @@ int main() {
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
+
     std::println();
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by(grid_decomposition, generator_for(n, Dimensions{ 2 }));
+        auto stats                      = time_taken_by(sweepline, generator_for(n, Dimensions{ 2 }));
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
+
+    // std::println();
+
+    // for (auto n : point_counts) {
+    //     auto stats                      = time_taken_by(grid_decomposition, generator_for(n, Dimensions{ 2 }));
+    //     auto [closest_pair, time_taken] = stats;
+    //     std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    // }
 
     return 0;
 }
