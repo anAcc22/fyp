@@ -174,11 +174,12 @@ ClosestPair sweepline(std::vector<Point> points) {
     ClosestPair closest_pair{};
     closest_pair.gap = std::numeric_limits<long long>::max();
 
-    auto temporary_storage(points);
     std::ranges::sort(points);
 
     struct y_comparator {
-        bool operator()(Point point_a, Point point_b) const { return point_a.y < point_b.y; }
+        bool operator()(Point point_a, Point point_b) const {
+            return std::pair{ point_a.y, point_a.x } < std::pair{ point_b.y, point_b.x };
+        }
     };
 
     std::set<Point, y_comparator> candidates;
@@ -190,9 +191,15 @@ ClosestPair sweepline(std::vector<Point> points) {
             candidates.erase(points[i++]);
         }
 
-        int y_difference = ceiling_square_root(closest_pair.gap);
-        auto iter_start  = candidates.lower_bound(Point{ 0, cur_point.y - y_difference });
-        auto iter_end    = candidates.upper_bound(Point{ 0, cur_point.y + y_difference });
+        auto iter_start = begin(candidates);
+        auto iter_end   = end(candidates);
+
+        if (closest_pair.gap != std::numeric_limits<long long>::max()) {
+            auto y_difference = static_cast<int>(ceiling_square_root(closest_pair.gap));
+
+            iter_start = candidates.lower_bound(Point{ 0, cur_point.y - y_difference });
+            iter_end   = candidates.upper_bound(Point{ 0, cur_point.y + y_difference });
+        }
 
         for (auto iter = iter_start; iter != iter_end; iter++) {
             attempt_to_improve(closest_pair, cur_point, *iter);
