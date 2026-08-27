@@ -1,6 +1,8 @@
 *
+.venv
 !*.cpp
 !*.hpp
 !Makefile
 !.gitignore
 !*/
+!*.py
