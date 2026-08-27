@@ -245,6 +245,13 @@ ClosestPair grid_decomposition(std::vector<Point> points) {
 
         auto point_a = points[i], point_b = points[j];
 
+        if (point_a == point_b) {
+            closest_pair.point_a = point_a;
+            closest_pair.point_b = point_b;
+            closest_pair.gap     = 0;
+            return closest_pair;
+        }
+
         grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
     }
 
