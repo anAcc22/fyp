@@ -4,5 +4,6 @@
 !*.hpp
 !Makefile
 !.gitignore
+!/src
 !*/
 !*.py
