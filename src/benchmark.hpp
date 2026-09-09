@@ -12,8 +12,9 @@ struct RunStatistics {
 };
 
 template <typename PointType>
-RunStatistics<PointType> time_taken_by(auto solver, Generator params) {
-    auto points       = generate_points(params);
+RunStatistics<PointType> time_taken_by(ClosestPair<PointType> (*solver)(std::vector<PointType>), size_t point_count) {
+    auto params       = generator_for(point_count, PointType::dimension_count);
+    auto points       = generate_points<PointType>(params);
     auto start_time   = std::chrono::steady_clock::now();
     auto closest_pair = solver(points);
     auto end_time     = std::chrono::steady_clock::now();

@@ -6,9 +6,8 @@
 #include <ranges>
 
 ClosestPair<Point2D> divide_and_conquer(std::vector<Point2D> points) {
-    auto n = points.size();
-    ClosestPair<Point2D> closest_pair{};
-    closest_pair.gap = std::numeric_limits<int64_t>::max();
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point2D>::init();
 
     auto temporary_storage(points);
     std::ranges::sort(points);

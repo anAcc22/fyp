@@ -4,9 +4,8 @@
 #include <ranges>
 
 ClosestPair<Point2D> examine_all_pairs(std::vector<Point2D> points) {
-    auto n = points.size();
-    ClosestPair<Point2D> closest_pair{};
-    closest_pair.gap = std::numeric_limits<int64_t>::max();
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point2D>::init();
 
     for (auto i : std::views::iota(0uz, n)) {
         for (auto j : std::views::iota(i + 1, n)) {

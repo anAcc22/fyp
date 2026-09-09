@@ -9,6 +9,7 @@
 #include <string>
 
 struct Point2D {
+    static constexpr size_t dimension_count = 2;
     int32_t x, y;
     friend auto operator<=>(Point2D, Point2D) = default;
 };
@@ -22,6 +23,7 @@ struct std::formatter<Point2D> : std::formatter<std::string> {
 
 template <size_t dimensions>
 struct Point {
+    static constexpr size_t dimension_count = dimensions;
     std::array<int32_t, dimensions> vector;
 };
 
@@ -36,6 +38,12 @@ template <typename PointType>
 struct ClosestPair {
     PointType point_a, point_b;
     int64_t gap;
+    constexpr static int64_t INFINITE_GAP = std::numeric_limits<int64_t>::max();
+    static ClosestPair init() {
+        ClosestPair closest_pair{};
+        closest_pair.gap = INFINITE_GAP;
+        return closest_pair;
+    }
 };
 
 template <typename PointType>

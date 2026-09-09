@@ -7,11 +7,11 @@
 #include <utility>
 
 #include "utilities.hpp"
+#include "geometry.hpp"
 
 ClosestPair<Point2D> sweepline(std::vector<Point2D> points) {
-    auto n = points.size();
-    ClosestPair<Point2D> closest_pair{};
-    closest_pair.gap = std::numeric_limits<int64_t>::max();
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point2D>::init();
 
     std::ranges::sort(points);
 
@@ -33,7 +33,7 @@ ClosestPair<Point2D> sweepline(std::vector<Point2D> points) {
         auto iter_start = begin(candidates);
         auto iter_end   = end(candidates);
 
-        if (closest_pair.gap != std::numeric_limits<int64_t>::max()) {
+        if (closest_pair.gap != closest_pair.INFINITE_GAP) {
             auto y_difference = static_cast<int32_t>(ceiling_square_root(closest_pair.gap));
 
             iter_start = candidates.lower_bound(Point2D{ 0, cur_point.y - y_difference });

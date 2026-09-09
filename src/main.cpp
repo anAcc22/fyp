@@ -36,7 +36,7 @@ int main() {
     // std::println();
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point2D>(grid_decomposition, generator_for(n, Dimensions{ 2 }));
+        auto stats                      = time_taken_by<Point2D>(grid_decomposition, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -44,7 +44,7 @@ int main() {
     std::println();
 
     for (auto n : point_counts) {
-        auto stats = time_taken_by<Point2D>(parallel_grid_decomposition, generator_for(n, Dimensions{ 2 }));
+        auto stats                      = time_taken_by<Point2D>(parallel_grid_decomposition, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
