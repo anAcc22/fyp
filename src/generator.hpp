@@ -14,14 +14,14 @@ inline std::mt19937_64 point_selector_randomiser(SEED);
 using Dimensions = int;
 
 struct Generator {
-    int point_count = 0;
-    int min_value = 0, max_value = 0;
+    size_t point_count = 0;
+    int32_t min_value = 0, max_value = 0;
     friend auto operator<=>(Generator, Generator) = default;
 };
 
-int safe_max_coordinate_at(Dimensions dimensions);
+int32_t safe_max_coordinate_at(Dimensions dimensions);
 
-Generator generator_for(int point_count, Dimensions dimensions);
+Generator generator_for(size_t point_count, Dimensions dimensions);
 
 void save_points_to_disk(Generator params, const std::vector<Point2D> &points);
 

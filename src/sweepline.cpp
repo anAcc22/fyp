@@ -23,7 +23,7 @@ ClosestPair sweepline(std::vector<Point2D> points) {
 
     std::set<Point2D, y_comparator> candidates;
 
-    for (auto i = 0uz; auto j : std::views::iota(0uz, n)) {
+    for (size_t i{}; auto j : std::views::iota(0uz, n)) {
         auto cur_point = points[j];
 
         while (i < j && squared_distance(cur_point, points[i], Axis::X) >= closest_pair.gap) {

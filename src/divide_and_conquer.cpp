@@ -42,7 +42,7 @@ ClosestPair divide_and_conquer(std::vector<Point2D> points) {
             y_comparator);
         copy(begin(temporary_storage), begin(temporary_storage) + (r - l), begin(points) + l);
 
-        for (int temp_idx = 0; auto i : std::views::iota(l, r)) {
+        for (size_t temp_idx{}; auto i : std::views::iota(l, r)) {
             if (squared_distance(points[i], Point2D{ middle_x, 0 }, Axis::X) >= closest_pair.gap) continue;
             for (int j = temp_idx - 1;
                  j >= 0 && squared_distance(points[i], temporary_storage[j], Axis::Y) < closest_pair.gap;

@@ -11,12 +11,12 @@
 
 #include "solvers.hpp"
 
-int safe_max_coordinate_at(Dimensions dimensions) {
-    constexpr static long long LIMIT = 1'000'000'000'000'000'000LL;
-    return static_cast<int>(std::sqrt(static_cast<double>(LIMIT) / dimensions));
+int32_t safe_max_coordinate_at(Dimensions dimensions) {
+    constexpr static int64_t LIMIT = 1'000'000'000'000'000'000LL;
+    return static_cast<int32_t>(std::sqrt(static_cast<double>(LIMIT) / dimensions));
 }
 
-Generator generator_for(int point_count, Dimensions dimensions) {
+Generator generator_for(size_t point_count, Dimensions dimensions) {
     return Generator{ .point_count = point_count, .min_value = 0, .max_value = safe_max_coordinate_at(dimensions) };
 }
 

@@ -6,8 +6,13 @@
 #include <string>
 
 struct Point2D {
-    int x, y;
+    int32_t x, y;
     friend auto operator<=>(Point2D, Point2D) = default;
+};
+
+template <size_t dimensions>
+struct Point {
+    std::array<int32_t, dimensions> vector;
 };
 
 template <>
@@ -17,7 +22,7 @@ struct std::formatter<Point2D> : std::formatter<std::string> {
 
 struct ClosestPair {
     Point2D point_a, point_b;
-    long long gap;
+    int64_t gap;
 };
 
 template <>
@@ -33,12 +38,12 @@ enum class Axis {
     Y,
 };
 
-inline long long squared_distance(Point2D point_a, Point2D point_b, Axis axis) {
-    long long gap = (axis == Axis::X ? point_a.x - point_b.x : point_a.y - point_b.y);
+inline int64_t squared_distance(Point2D point_a, Point2D point_b, Axis axis) {
+    auto gap = (axis == Axis::X ? point_a.x - point_b.x : point_a.y - point_b.y);
     return gap * gap;
 }
 
-inline long long squared_euclidean_distance_between(Point2D point_a, Point2D point_b) {
+inline int64_t squared_euclidean_distance_between(Point2D point_a, Point2D point_b) {
     return squared_distance(point_a, point_b, Axis::X) + squared_distance(point_a, point_b, Axis::Y);
 }
 

@@ -16,9 +16,9 @@
 ClosestPair grid_decomposition(std::vector<Point2D> points) {
     auto n = points.size();
     ClosestPair closest_pair{};
-    closest_pair.gap = std::numeric_limits<long long>::max();
+    closest_pair.gap = std::numeric_limits<int64_t>::max();
 
-    long long grid_width_squared = std::numeric_limits<long long>::max();
+    int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
     std::uniform_int_distribution index_generator(0uz, n - 1);
 
     for (auto _ : std::views::iota(0uz, n)) {
@@ -82,9 +82,9 @@ ClosestPair parallel_grid_decomposition(std::vector<Point2D> points) {
 
     auto n = points.size();
     ClosestPair closest_pair{};
-    closest_pair.gap = std::numeric_limits<long long>::max();
+    closest_pair.gap = std::numeric_limits<int64_t>::max();
 
-    long long grid_width_squared = std::numeric_limits<long long>::max();
+    int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
     std::uniform_int_distribution index_generator(0uz, n - 1);
 
     for (auto _ : std::views::iota(0uz, n)) {
@@ -125,7 +125,7 @@ ClosestPair parallel_grid_decomposition(std::vector<Point2D> points) {
 
     auto solve = [&](int start_index) -> void {
         ClosestPair closest_pair{};
-        closest_pair.gap = std::numeric_limits<long long>::max();
+        closest_pair.gap = std::numeric_limits<int64_t>::max();
 
         for (const auto u : point_iterators | std::views::drop(start_index) | std::views::stride(thread_cnt)) {
             const auto &square       = u->first;
