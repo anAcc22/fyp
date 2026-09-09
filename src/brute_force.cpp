@@ -6,7 +6,7 @@
 ClosestPair examine_all_pairs(std::vector<Point2D> points) {
     auto n = points.size();
     ClosestPair closest_pair{};
-    closest_pair.gap = std::numeric_limits<long long>::max();
+    closest_pair.gap = std::numeric_limits<int64_t>::max();
 
     for (auto i : std::views::iota(0uz, n)) {
         for (auto j : std::views::iota(i + 1, n)) {

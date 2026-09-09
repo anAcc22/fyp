@@ -1,7 +1,10 @@
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <compare>
+#include <cstddef>
+#include <cstdint>
 #include <format>
 #include <string>
 
@@ -39,7 +42,7 @@ enum class Axis {
 };
 
 inline int64_t squared_distance(Point2D point_a, Point2D point_b, Axis axis) {
-    auto gap = (axis == Axis::X ? point_a.x - point_b.x : point_a.y - point_b.y);
+    int64_t gap = (axis == Axis::X ? int64_t{ point_a.x } - point_b.x : int64_t{ point_a.y } - point_b.y);
     return gap * gap;
 }
 

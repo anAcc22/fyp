@@ -11,7 +11,7 @@
 ClosestPair sweepline(std::vector<Point2D> points) {
     auto n = points.size();
     ClosestPair closest_pair{};
-    closest_pair.gap = std::numeric_limits<long long>::max();
+    closest_pair.gap = std::numeric_limits<int64_t>::max();
 
     std::ranges::sort(points);
 
@@ -33,8 +33,8 @@ ClosestPair sweepline(std::vector<Point2D> points) {
         auto iter_start = begin(candidates);
         auto iter_end   = end(candidates);
 
-        if (closest_pair.gap != std::numeric_limits<long long>::max()) {
-            auto y_difference = static_cast<int>(ceiling_square_root(closest_pair.gap));
+        if (closest_pair.gap != std::numeric_limits<int64_t>::max()) {
+            auto y_difference = static_cast<int32_t>(ceiling_square_root(closest_pair.gap));
 
             iter_start = candidates.lower_bound(Point2D{ 0, cur_point.y - y_difference });
             iter_end   = candidates.upper_bound(Point2D{ 0, cur_point.y + y_difference });
