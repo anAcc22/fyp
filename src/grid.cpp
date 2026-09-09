@@ -13,9 +13,9 @@
 #include "grid.hpp"
 #include "utilities.hpp"
 
-ClosestPair grid_decomposition(std::vector<Point2D> points) {
+ClosestPair<Point2D> grid_decomposition(std::vector<Point2D> points) {
     auto n = points.size();
-    ClosestPair closest_pair{};
+    ClosestPair<Point2D> closest_pair{};
     closest_pair.gap = std::numeric_limits<int64_t>::max();
 
     int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
@@ -77,11 +77,11 @@ ClosestPair grid_decomposition(std::vector<Point2D> points) {
     return closest_pair;
 }
 
-ClosestPair parallel_grid_decomposition(std::vector<Point2D> points) {
+ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
     static ThreadCount thread_cnt = std::thread::hardware_concurrency();
 
     auto n = points.size();
-    ClosestPair closest_pair{};
+    ClosestPair<Point2D> closest_pair{};
     closest_pair.gap = std::numeric_limits<int64_t>::max();
 
     int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
@@ -115,7 +115,7 @@ ClosestPair parallel_grid_decomposition(std::vector<Point2D> points) {
         points_by_square[{ square_x, square_y }].push_back(point);
     }
 
-    std::vector<ClosestPair> best_of_thread(thread_cnt);
+    std::vector<ClosestPair<Point2D>> best_of_thread(thread_cnt);
     std::vector<decltype(begin(points_by_square))> point_iterators;
     point_iterators.reserve(n);
 
@@ -124,7 +124,7 @@ ClosestPair parallel_grid_decomposition(std::vector<Point2D> points) {
     }
 
     auto solve = [&](int start_index) -> void {
-        ClosestPair closest_pair{};
+        ClosestPair<Point2D> closest_pair{};
         closest_pair.gap = std::numeric_limits<int64_t>::max();
 
         for (const auto u : point_iterators | std::views::drop(start_index) | std::views::stride(thread_cnt)) {

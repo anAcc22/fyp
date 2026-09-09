@@ -8,9 +8,9 @@
 
 #include "utilities.hpp"
 
-ClosestPair sweepline(std::vector<Point2D> points) {
+ClosestPair<Point2D> sweepline(std::vector<Point2D> points) {
     auto n = points.size();
-    ClosestPair closest_pair{};
+    ClosestPair<Point2D> closest_pair{};
     closest_pair.gap = std::numeric_limits<int64_t>::max();
 
     std::ranges::sort(points);

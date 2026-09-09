@@ -34,6 +34,7 @@ void save_points_to_disk(Generator params, const std::vector<Point2D> &points) {
     }
 }
 
+template <>
 std::vector<Point2D> generate_points(Generator params) {
     assert(params.point_count >= 2);
 

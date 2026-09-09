@@ -5,12 +5,14 @@
 #include "generator.hpp"
 #include "geometry.hpp"
 
+template <typename PointType>
 struct RunStatistics {
-    ClosestPair closest_pair;
+    ClosestPair<PointType> closest_pair;
     std::chrono::duration<double> time_taken;
 };
 
-RunStatistics time_taken_by(auto solver, Generator params) {
+template <typename PointType>
+RunStatistics<PointType> time_taken_by(auto solver, Generator params) {
     auto points       = generate_points(params);
     auto start_time   = std::chrono::steady_clock::now();
     auto closest_pair = solver(points);

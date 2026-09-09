@@ -25,4 +25,5 @@ Generator generator_for(size_t point_count, Dimensions dimensions);
 
 void save_points_to_disk(Generator params, const std::vector<Point2D> &points);
 
-std::vector<Point2D> generate_points(Generator params);
+template <typename PointType>
+std::vector<PointType> generate_points(Generator params);
