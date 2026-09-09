@@ -33,23 +33,3 @@ void save_points_to_disk(Generator params, const std::vector<Point2D> &points) {
         std::println(file, "{},{},{}", point.x, point.y, (i == point_a_idx || i == point_b_idx ? 1 : 0));
     }
 }
-
-template <>
-std::vector<Point2D> generate_points(Generator params) {
-    assert(params.point_count >= 2);
-
-    static std::map<Generator, std::vector<Point2D>> cached_points;
-    if (cached_points.contains(params)) return cached_points[params];
-
-    std::vector<Point2D> points(params.point_count);
-    std::uniform_int_distribution coord_generator(params.min_value, params.max_value);
-
-    for (auto &[x, y] : points) {
-        x = coord_generator(point_generator_randomiser);
-        y = coord_generator(point_generator_randomiser);
-    }
-
-    save_points_to_disk(params, points);
-
-    return cached_points[params] = points;
-}

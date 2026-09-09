@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <ranges>
 #include <string>
 
 struct Point2D {
@@ -22,6 +23,7 @@ struct std::formatter<Point2D> : std::formatter<std::string> {
 };
 
 template <size_t dimensions>
+    requires(dimensions >= 1)
 struct Point {
     static constexpr size_t dimension_count = dimensions;
     std::array<int32_t, dimensions> vector;
@@ -30,7 +32,11 @@ struct Point {
 template <size_t dimensions>
 struct std::formatter<Point<dimensions>> : std::formatter<std::string> {
     auto format(const Point<dimensions> &point, auto &ctx) const {
-        return std::format_to(ctx.out(), "({:n:L})", point.vector);
+        if constexpr (dimensions == 1) {
+            return std::format_to(ctx.out(), "[{}]({:L})", dimensions, point.vector[0]);
+        } else {
+            return std::format_to(ctx.out(), "[{}]({:L}, ...)", dimensions, point.vector[0]);
+        }
     }
 };
 
@@ -68,7 +74,18 @@ inline int64_t squared_euclidean_distance_between(Point2D point_a, Point2D point
     return squared_distance(point_a, point_b, Axis::X) + squared_distance(point_a, point_b, Axis::Y);
 }
 
-inline void attempt_to_improve(ClosestPair<Point2D> &closest_pair, Point2D point_a, Point2D point_b) {
+template <size_t dimensions>
+int64_t squared_euclidean_distance_between(Point<dimensions> point_a, Point<dimensions> point_b) {
+    int64_t total = 0;
+    for (auto i : std::views::iota(0uz, dimensions)) {
+        int64_t gap = int64_t{ point_a.vector[i] } - point_b.vector[i];
+        total += gap * gap;
+    }
+    return total;
+}
+
+template <typename PointType>
+void attempt_to_improve(ClosestPair<PointType> &closest_pair, PointType point_a, PointType point_b) {
     if (auto gap = squared_euclidean_distance_between(point_a, point_b); gap < closest_pair.gap) {
         closest_pair = { point_a, point_b, gap };
     }

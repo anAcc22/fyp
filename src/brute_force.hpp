@@ -1,11 +1,14 @@
+#pragma once
+
 #include "solvers.hpp"
 
 #include <limits>
 #include <ranges>
 
-ClosestPair<Point2D> examine_all_pairs(std::vector<Point2D> points) {
+template <typename PointType>
+ClosestPair<PointType> examine_all_pairs(std::vector<PointType> points) {
     auto n            = points.size();
-    auto closest_pair = ClosestPair<Point2D>::init();
+    auto closest_pair = ClosestPair<PointType>::init();
 
     for (auto i : std::views::iota(0uz, n)) {
         for (auto j : std::views::iota(i + 1, n)) {
