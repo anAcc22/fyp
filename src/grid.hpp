@@ -5,8 +5,6 @@
 #include <cstdint>
 #include <functional>
 
-using ThreadCount = int;
-
 struct GridSquare {
     int64_t x, y;
     friend auto operator<=>(GridSquare, GridSquare) = default;

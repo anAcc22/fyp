@@ -20,7 +20,23 @@ int main() {
     std::println();
 
     for (auto n : point_counts) {
+        auto stats                      = time_taken_by<Point2D>(examine_all_pairs_in_parallel, n);
+        auto [closest_pair, time_taken] = stats;
+        std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    }
+
+    std::println();
+
+    for (auto n : point_counts) {
         auto stats                      = time_taken_by<Point<3>>(examine_all_pairs, n);
+        auto [closest_pair, time_taken] = stats;
+        std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    }
+
+    std::println();
+
+    for (auto n : point_counts) {
+        auto stats                      = time_taken_by<Point<3>>(examine_all_pairs_in_parallel, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }

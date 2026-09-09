@@ -1,3 +1,4 @@
+#include "multithreading.hpp"
 #include "solvers.hpp"
 
 #include <algorithm>
@@ -77,8 +78,6 @@ ClosestPair<Point2D> grid_decomposition(std::vector<Point2D> points) {
 }
 
 ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
-    static ThreadCount thread_cnt = std::thread::hardware_concurrency();
-
     auto n            = points.size();
     auto closest_pair = ClosestPair<Point2D>::init();
 
@@ -113,7 +112,7 @@ ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
         points_by_square[{ square_x, square_y }].push_back(point);
     }
 
-    std::vector<ClosestPair<Point2D>> best_of_thread(thread_cnt);
+    std::vector<ClosestPair<Point2D>> best_of_thread(THREAD_COUNT);
     std::vector<decltype(begin(points_by_square))> point_iterators;
     point_iterators.reserve(n);
 
@@ -121,10 +120,10 @@ ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
         point_iterators.push_back(u);
     }
 
-    auto solve = [&](int start_index) -> void {
+    auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point2D>::init();
 
-        for (const auto u : point_iterators | std::views::drop(start_index) | std::views::stride(thread_cnt)) {
+        for (const auto u : point_iterators | std::views::drop(start_index) | std::views::stride(THREAD_COUNT)) {
             const auto &square       = u->first;
             const auto &inner_points = u->second;
 
@@ -158,12 +157,12 @@ ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
     {
         std::vector<std::jthread> threads;
 
-        for (auto i : std::views::iota(0, thread_cnt)) {
+        for (auto i : std::views::iota(0uz, THREAD_COUNT)) {
             threads.emplace_back(solve, i);
         }
     }
 
-    for (auto i : std::views::iota(0, thread_cnt)) {
+    for (auto i : std::views::iota(0uz, THREAD_COUNT)) {
         const auto &thread_best = best_of_thread[i];
         if (thread_best.gap < closest_pair.gap) closest_pair = thread_best;
     }
