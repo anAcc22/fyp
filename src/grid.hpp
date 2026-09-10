@@ -54,33 +54,42 @@ struct std::hash<GridBox<dimensions>> {
     }
 };
 
-template <size_t dimensions>
+template <
+    size_t dimensions, GridWidthStrategy strategy = GridWidthStrategy::Sampling,
+    double multiplier = DEFAULT_GRID_WIDTH_MULTIPLIER>
 ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>> points) {
-    auto n            = points.size();
+    auto n = points.size();
+
     auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
-    int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
-    std::uniform_int_distribution index_generator(0uz, n - 1);
+    int64_t grid_width{};
 
-    for (auto _ : std::views::iota(0uz, n)) {
-        auto i = index_generator(point_selector_randomiser);
-        auto j = index_generator(point_selector_randomiser);
+    if constexpr (strategy == GridWidthStrategy::Sampling) {
+        int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
+        std::uniform_int_distribution index_generator(0uz, n - 1);
 
-        if (i == j) continue;
+        for (auto _ : std::views::iota(0uz, n)) {
+            auto i = index_generator(point_selector_randomiser);
+            auto j = index_generator(point_selector_randomiser);
 
-        auto point_a = points[i], point_b = points[j];
+            if (i == j) continue;
 
-        if (point_a == point_b) {
-            closest_pair.point_a = point_a;
-            closest_pair.point_b = point_b;
-            closest_pair.gap     = 0;
-            return closest_pair;
+            auto point_a = points[i], point_b = points[j];
+
+            if (point_a == point_b) {
+                closest_pair.point_a = point_a;
+                closest_pair.point_b = point_b;
+                closest_pair.gap     = 0;
+                return closest_pair;
+            }
+
+            grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
         }
 
-        grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
+        grid_width = ceiling_square_root(grid_width_squared);
+    } else {
+        grid_width = expected_nearest_neighbour_distance<dimensions, multiplier>(points);
     }
-
-    auto grid_width = ceiling_square_root(grid_width_squared);
 
     std::unordered_map<GridBox<dimensions>, std::vector<Point<dimensions>>> points_by_box;
     points_by_box.reserve(n);
@@ -125,33 +134,42 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
     return closest_pair;
 }
 
-template <size_t dimensions>
+template <
+    size_t dimensions, GridWidthStrategy strategy = GridWidthStrategy::Sampling,
+    double multiplier = DEFAULT_GRID_WIDTH_MULTIPLIER>
 ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dimensions>> points) {
-    auto n            = points.size();
+    auto n = points.size();
+
     auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
-    int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
-    std::uniform_int_distribution index_generator(0uz, n - 1);
+    int64_t grid_width{};
 
-    for (auto _ : std::views::iota(0uz, n)) {
-        auto i = index_generator(point_selector_randomiser);
-        auto j = index_generator(point_selector_randomiser);
+    if constexpr (strategy == GridWidthStrategy::Sampling) {
+        int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
+        std::uniform_int_distribution index_generator(0uz, n - 1);
 
-        if (i == j) continue;
+        for (auto _ : std::views::iota(0uz, n)) {
+            auto i = index_generator(point_selector_randomiser);
+            auto j = index_generator(point_selector_randomiser);
 
-        auto point_a = points[i], point_b = points[j];
+            if (i == j) continue;
 
-        if (point_a == point_b) {
-            closest_pair.point_a = point_a;
-            closest_pair.point_b = point_b;
-            closest_pair.gap     = 0;
-            return closest_pair;
+            auto point_a = points[i], point_b = points[j];
+
+            if (point_a == point_b) {
+                closest_pair.point_a = point_a;
+                closest_pair.point_b = point_b;
+                closest_pair.gap     = 0;
+                return closest_pair;
+            }
+
+            grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
         }
 
-        grid_width_squared = std::min(grid_width_squared, squared_euclidean_distance_between(point_a, point_b));
+        grid_width = ceiling_square_root(grid_width_squared);
+    } else {
+        grid_width = expected_nearest_neighbour_distance<dimensions, multiplier>(points);
     }
-
-    auto grid_width = ceiling_square_root(grid_width_squared);
 
     std::unordered_map<GridBox<dimensions>, std::vector<Point<dimensions>>> points_by_box;
     points_by_box.reserve(n);
