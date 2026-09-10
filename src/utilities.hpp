@@ -5,9 +5,17 @@
 #include <cmath>
 #include <ranges>
 #include <algorithm>
+#include <cstdint>
 #include <numeric>
 #include <numbers>
 #include <vector>
+
+inline uint64_t mix_bits(uint64_t x) {
+    x += 0x9e3779b97f4a7c15;
+    x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+    x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+    return x ^ (x >> 31);
+}
 
 template <typename T>
 T ceiling_square_root(T x) {
@@ -60,7 +68,7 @@ double bounding_box_volume(const std::vector<Point<dimensions>> &points) {
     double volume = 1.0;
 
     for (auto axis : std::views::iota(0uz, dimensions)) {
-        auto coordinate  = [axis](const auto &point) { return point.vector[axis]; };
+        auto coordinate  = [axis](const auto &point) { return point[axis]; };
         auto [low, high] = std::ranges::minmax(points | std::views::transform(coordinate));
         volume *= static_cast<double>(high - low) + 1.0;
     }

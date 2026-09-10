@@ -1,5 +1,3 @@
-#include "solvers.hpp"
-
 #include <algorithm>
 #include <limits>
 #include <ranges>

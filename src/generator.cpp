@@ -1,4 +1,5 @@
 #include "generator.hpp"
+#include "sweepline.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -8,8 +9,6 @@
 #include <print>
 #include <ranges>
 #include <string>
-
-#include "solvers.hpp"
 
 int32_t safe_max_coordinate_at(Dimensions dimensions) {
     constexpr static int64_t LIMIT = 1'000'000'000'000'000'000LL;

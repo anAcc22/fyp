@@ -16,15 +16,7 @@ struct GridSquare {
 
 template <>
 struct std::hash<GridSquare> {
-    size_t operator()(GridSquare square) const noexcept {
-        auto mix = [](uint64_t x) {
-            x += 0x9e3779b97f4a7c15;
-            x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
-            x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
-            return x ^ (x >> 31);
-        };
-        return mix(square.x) ^ (mix(square.y) << 1);
-    }
+    size_t operator()(GridSquare square) const noexcept { return mix_bits(square.x) ^ (mix_bits(square.y) << 1); }
 };
 
 ClosestPair<Point2D> grid_decomposition(std::vector<Point2D> points);
@@ -36,23 +28,20 @@ template <size_t dimensions>
 struct GridBox {
     static constexpr size_t dimension_count = dimensions;
     std::array<int64_t, dimensions> vector;
+    constexpr auto &operator[](this auto &self, size_t index) { return self.vector[index]; }
     friend auto operator<=>(GridBox, GridBox) = default;
 };
 
 template <size_t dimensions>
 struct std::hash<GridBox<dimensions>> {
     size_t operator()(GridBox<dimensions> box) const noexcept {
-        auto mix = [](uint64_t x) {
-            x += 0x9e3779b97f4a7c15;
-            x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
-            x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
-            return x ^ (x >> 31);
-        };
         size_t answer{};
-        for (auto x : box.vector) answer = mix(answer ^ mix(x));
+        for (auto x : box.vector) answer = mix_bits(answer ^ mix_bits(x));
         return answer;
     }
 };
+
+inline constexpr auto SMALL_POINT_COUNT = 36;
 
 template <
     size_t dimensions, GridWidthStrategy strategy = GridWidthStrategy::Sampling,
@@ -64,7 +53,7 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
 
     int64_t grid_width{};
 
-    if constexpr (strategy == GridWidthStrategy::Sampling) {
+    if (strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
         int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
@@ -96,7 +85,7 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
 
     for (auto point : points) {
         GridBox<dimensions> box{};
-        for (auto [i, x] : std::views::enumerate(point.vector)) box.vector[i] = x / grid_width;
+        for (auto [i, x] : std::views::enumerate(point.vector)) box[i] = x / grid_width;
         points_by_box[box].push_back(point);
     }
 
@@ -117,7 +106,7 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
             auto outer_box = box;
 
             for (auto i : std::views::iota(0uz, dimensions)) {
-                outer_box.vector[i] += offset[i];
+                outer_box[i] += offset[i];
             }
 
             auto iter = points_by_box.find(outer_box);
@@ -144,7 +133,7 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
 
     int64_t grid_width{};
 
-    if constexpr (strategy == GridWidthStrategy::Sampling) {
+    if (strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
         int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
@@ -176,7 +165,7 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
 
     for (auto point : points) {
         GridBox<dimensions> box{};
-        for (auto [i, x] : std::views::enumerate(point.vector)) box.vector[i] = x / grid_width;
+        for (auto [i, x] : std::views::enumerate(point.vector)) box[i] = x / grid_width;
         points_by_box[box].push_back(point);
     }
 
@@ -191,10 +180,9 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
-        for (const auto box_and_points :
-             point_iterators | std::views::drop(start_index) | std::views::stride(THREAD_COUNT)) {
-            const auto &box          = box_and_points->first;
-            const auto &inner_points = box_and_points->second;
+        for (auto index = start_index; index < point_iterators.size(); index += THREAD_COUNT) {
+            const auto &box          = point_iterators[index]->first;
+            const auto &inner_points = point_iterators[index]->second;
 
             auto cnt = inner_points.size();
 
@@ -213,7 +201,7 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
                 auto outer_box = box;
 
                 for (auto i : std::views::iota(0uz, dimensions)) {
-                    outer_box.vector[i] += offset[i];
+                    outer_box[i] += offset[i];
                 }
 
                 auto iter = points_by_box.find(outer_box);

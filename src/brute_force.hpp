@@ -1,10 +1,11 @@
 #pragma once
 
-#include "solvers.hpp"
+#include "geometry.hpp"
 #include "multithreading.hpp"
 
 #include <limits>
 #include <ranges>
+#include <vector>
 
 template <typename PointType>
 ClosestPair<PointType> examine_all_pairs(std::vector<PointType> points) {
@@ -30,7 +31,7 @@ ClosestPair<PointType> examine_all_pairs_in_parallel(std::vector<PointType> poin
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<PointType>::init();
 
-        for (auto i : std::views::iota(start_index, n) | std::views::stride(THREAD_COUNT)) {
+        for (auto i = start_index; i < n; i += THREAD_COUNT) {
             for (auto j : std::views::iota(i + 1, n)) {
                 attempt_to_improve(closest_pair, points[i], points[j]);
             }

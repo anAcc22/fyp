@@ -1,5 +1,4 @@
 #include "multithreading.hpp"
-#include "solvers.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -123,9 +122,9 @@ ClosestPair<Point2D> parallel_grid_decomposition(std::vector<Point2D> points) {
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point2D>::init();
 
-        for (const auto u : point_iterators | std::views::drop(start_index) | std::views::stride(THREAD_COUNT)) {
-            const auto &square       = u->first;
-            const auto &inner_points = u->second;
+        for (auto index = start_index; index < point_iterators.size(); index += THREAD_COUNT) {
+            const auto &square       = point_iterators[index]->first;
+            const auto &inner_points = point_iterators[index]->second;
 
             auto cnt = inner_points.size();
 

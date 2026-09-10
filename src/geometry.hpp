@@ -27,6 +27,7 @@ template <size_t dimensions>
 struct Point {
     static constexpr size_t dimension_count = dimensions;
     std::array<int32_t, dimensions> vector;
+    constexpr auto &operator[](this auto &self, size_t index) { return self.vector[index]; }
     friend auto operator<=>(Point, Point) = default;
 };
 
@@ -34,9 +35,9 @@ template <size_t dimensions>
 struct std::formatter<Point<dimensions>> : std::formatter<std::string> {
     auto format(const Point<dimensions> &point, auto &ctx) const {
         if constexpr (dimensions == 1) {
-            return std::format_to(ctx.out(), "[{}]({:L})", dimensions, point.vector[0]);
+            return std::format_to(ctx.out(), "[{}]({:L})", dimensions, point[0]);
         } else {
-            return std::format_to(ctx.out(), "[{}]({:L}, ...)", dimensions, point.vector[0]);
+            return std::format_to(ctx.out(), "[{}]({:L}, ...)", dimensions, point[0]);
         }
     }
 };
@@ -80,7 +81,7 @@ template <size_t dimensions>
 int64_t squared_euclidean_distance_between(Point<dimensions> point_a, Point<dimensions> point_b) {
     int64_t total = 0;
     for (auto i : std::views::iota(0uz, dimensions)) {
-        int64_t gap = int64_t{ point_a.vector[i] } - point_b.vector[i];
+        int64_t gap = int64_t{ point_a[i] } - point_b[i];
         total += gap * gap;
     }
     return total;

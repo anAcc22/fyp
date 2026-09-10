@@ -17,7 +17,7 @@ void build_kd_tree(std::vector<Point<dimensions>> &points, size_t l, size_t r, s
     auto m    = std::midpoint(l, r);
 
     std::nth_element(begin(points) + l, begin(points) + m, begin(points) + r, [axis](const auto &a, const auto &b) {
-        return a.vector[axis] < b.vector[axis];
+        return a[axis] < b[axis];
     });
 
     build_kd_tree(points, l, m, depth + 1);
@@ -36,7 +36,7 @@ void find_and_improve_with_kd_tree(
 
     if (m != query_index) attempt_to_improve(closest_pair, query, points[m]);
 
-    int64_t gap_to_plane = int64_t{ query.vector[axis] } - points[m].vector[axis];
+    int64_t gap_to_plane = int64_t{ query[axis] } - points[m][axis];
 
     auto near_l = l, near_r = m, far_l = m + 1, far_r = r;
 
@@ -78,7 +78,7 @@ ClosestPair<Point<dimensions>> parallel_kd_tree(std::vector<Point<dimensions>> p
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
-        for (auto i : std::views::iota(start_index, n) | std::views::stride(THREAD_COUNT)) {
+        for (auto i = start_index; i < n; i += THREAD_COUNT) {
             find_and_improve_with_kd_tree(points, 0uz, n, 0uz, i, closest_pair);
         }
 
