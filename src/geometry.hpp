@@ -27,6 +27,7 @@ template <size_t dimensions>
 struct Point {
     static constexpr size_t dimension_count = dimensions;
     std::array<int32_t, dimensions> vector;
+    friend auto operator<=>(Point, Point) = default;
 };
 
 template <size_t dimensions>
