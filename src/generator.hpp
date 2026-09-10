@@ -1,9 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <compare>
 #include <random>
+#include <fstream>
 #include <vector>
 #include <map>
 
@@ -38,6 +40,29 @@ Generator generator_for(size_t point_count, Dimensions dimensions);
 
 void save_points_to_disk(Generator params, const std::vector<Point2D> &points);
 
+template <size_t dimensions>
+void save_points_to_disk(Generator params, const std::vector<Point<dimensions>> &points) {
+    auto path
+        = "data/general_points_" + std::to_string(dimensions) + "D_" + std::to_string(params.point_count) + ".csv";
+
+    std::ofstream file(path);
+
+    std::println(
+        file,
+        "{}",
+        std::views::iota(0uz, dimensions) | std::views::transform([](auto i) { return std::format("x{}", i); })
+            | std::views::join_with(',') | std::ranges::to<std::string>());
+
+    for (auto [i, point] : std::views::enumerate(points)) {
+        std::string row;
+        for (auto [j, x] : std::views::enumerate(point.vector)) {
+            if (j) row += ",";
+            row += std::to_string(x);
+        }
+        std::println(file, "{}", row);
+    }
+}
+
 template <typename PointType>
 std::vector<PointType> generate_points(Generator params) {
     assert(params.point_count >= 2);
@@ -52,7 +77,7 @@ std::vector<PointType> generate_points(Generator params) {
         randomise_coordinates(point, point_generator_randomiser, coord_generator);
     }
 
-    if constexpr (std::same_as<PointType, Point2D>) save_points_to_disk(params, points);
+    save_points_to_disk(params, points);
 
     return cached_points[params] = points;
 }

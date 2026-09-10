@@ -21,7 +21,7 @@ Generator generator_for(size_t point_count, Dimensions dimensions) {
 }
 
 void save_points_to_disk(Generator params, const std::vector<Point2D> &points) {
-    auto path = "data/points_" + std::to_string(params.point_count) + ".csv";
+    auto path = "data/points_2D_only_" + std::to_string(params.point_count) + ".csv";
     std::ofstream file(path);
     std::println(file, "x,y,is_part_of_shortest_pair");
 

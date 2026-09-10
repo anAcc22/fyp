@@ -8,17 +8,18 @@
 #include "brute_force.hpp"
 #include "kd_tree.hpp"
 
-constexpr auto URNN = GridWidthStrategy::UniformRandomNearestNeighbor;
+constexpr auto URNN       = GridWidthStrategy::UniformRandomNearestNeighbor;
+constexpr auto DIMENSIONS = 10;
 
 int main() {
     std::locale::global(std::locale("en_US.UTF-8"));
 
-    std::vector point_counts{ 10'000, 20'000, 30'000, 40'000 };
+    std::vector point_counts{ 1'000, 2'000, 3'000, 4'000 };
 
     std::println("|> Brute Force");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<6>>(examine_all_pairs_in_parallel, n);
+        auto stats                      = time_taken_by<Point<DIMENSIONS>>(examine_all_pairs_in_parallel, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -27,7 +28,7 @@ int main() {
     std::println("|> Grid Decomposition");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<6>>(grid_decomposition, n);
+        auto stats                      = time_taken_by<Point<DIMENSIONS>>(grid_decomposition, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -36,7 +37,7 @@ int main() {
     std::println("|> Parallel Grid Decomposition");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<6>>(parallel_grid_decomposition, n);
+        auto stats                      = time_taken_by<Point<DIMENSIONS>>(parallel_grid_decomposition, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -45,7 +46,7 @@ int main() {
     std::println("|> Grid Decomposition (Uniform Random Nearest Neighbor)");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by(grid_decomposition<6, URNN>, n);
+        auto stats                      = time_taken_by(grid_decomposition<DIMENSIONS, URNN>, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -54,7 +55,7 @@ int main() {
     std::println("|> Parallel Grid Decomposition (Uniform Random Nearest Neighbor)");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by(parallel_grid_decomposition<6, URNN>, n);
+        auto stats                      = time_taken_by(parallel_grid_decomposition<DIMENSIONS, URNN>, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -63,7 +64,7 @@ int main() {
     std::println("|> K-Dimensional tree");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<6>>(kd_tree, n);
+        auto stats                      = time_taken_by<Point<DIMENSIONS>>(kd_tree, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -72,7 +73,7 @@ int main() {
     std::println("|> Parallel K-Dimensional tree");
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<6>>(parallel_kd_tree, n);
+        auto stats                      = time_taken_by<Point<DIMENSIONS>>(parallel_kd_tree, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
