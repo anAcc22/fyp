@@ -57,6 +57,7 @@ template <typename PointType>
 struct std::formatter<ClosestPair<PointType>> : std::formatter<std::string> {
     auto format(const ClosestPair<PointType> &pair, auto &ctx) const {
         auto [point_a, point_b, gap] = pair;
+        if (point_a > point_b) swap(point_a, point_b);
         return std::format_to(ctx.out(), "{} <-> {} (gap: {:.3f})", point_a, point_b, sqrt(gap));
     }
 };

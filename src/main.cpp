@@ -6,6 +6,7 @@
 #include "benchmark.hpp"
 #include "generator.hpp"
 #include "brute_force.hpp"
+#include "kd_tree.hpp"
 
 int main() {
     std::locale::global(std::locale("en_US.UTF-8"));
@@ -13,7 +14,7 @@ int main() {
     std::vector point_counts{ 10'000, 20'000, 30'000, 40'000 };
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<3>>(examine_all_pairs_in_parallel, n);
+        auto stats                      = time_taken_by<Point<6>>(examine_all_pairs_in_parallel, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -21,7 +22,7 @@ int main() {
     std::println();
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<3>>(grid_decomposition, n);
+        auto stats                      = time_taken_by<Point<6>>(grid_decomposition, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
@@ -29,7 +30,23 @@ int main() {
     std::println();
 
     for (auto n : point_counts) {
-        auto stats                      = time_taken_by<Point<3>>(parallel_grid_decomposition, n);
+        auto stats                      = time_taken_by<Point<6>>(parallel_grid_decomposition, n);
+        auto [closest_pair, time_taken] = stats;
+        std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    }
+
+    std::println();
+
+    for (auto n : point_counts) {
+        auto stats                      = time_taken_by<Point<6>>(kd_tree, n);
+        auto [closest_pair, time_taken] = stats;
+        std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
+    }
+
+    std::println();
+
+    for (auto n : point_counts) {
+        auto stats                      = time_taken_by<Point<6>>(parallel_kd_tree, n);
         auto [closest_pair, time_taken] = stats;
         std::println("Point Count: {:L}, Elapsed Time: {:.3f}s, Closest Pair: {}", n, time_taken.count(), closest_pair);
     }
