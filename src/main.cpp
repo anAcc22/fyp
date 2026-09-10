@@ -9,12 +9,12 @@
 #include "kd_tree.hpp"
 
 constexpr auto URNN       = GridWidthStrategy::UniformRandomNearestNeighbor;
-constexpr auto DIMENSIONS = 10;
+constexpr auto DIMENSIONS = 6;
 
 int main() {
     std::locale::global(std::locale("en_US.UTF-8"));
 
-    std::vector point_counts{ 1'000, 2'000, 3'000, 4'000 };
+    std::vector point_counts{ 10'000, 20'000, 30'000, 40'000 };
 
     std::println("|> Brute Force");
 

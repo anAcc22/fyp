@@ -41,6 +41,22 @@ struct std::hash<GridBox<dimensions>> {
     }
 };
 
+template <size_t dimensions>
+std::vector<std::array<int16_t, dimensions>> neighbour_offsets() {
+    std::vector<std::array<int16_t, dimensions>> offsets;
+
+    offsets.reserve((fast_exponentiation(3uz, dimensions) - 1) / 2);
+
+    for (auto raw_offset : std::views::iota(0uz, fast_exponentiation(3uz, dimensions))) {
+        auto offset = offset_from<dimensions>(raw_offset);
+        auto first  = std::ranges::find_if(offset, [](auto x) { return x; });
+        if (first == end(offset) || *first <= 0) continue;
+        offsets.push_back(offset);
+    }
+
+    return offsets;
+}
+
 inline constexpr auto SMALL_POINT_COUNT = 36;
 
 template <
@@ -89,6 +105,8 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
         points_by_box[box].push_back(point);
     }
 
+    auto offsets = neighbour_offsets<dimensions>();
+
     for (const auto &[box, inner_points] : points_by_box) {
         auto cnt = inner_points.size();
 
@@ -98,9 +116,7 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
             }
         }
 
-        for (auto raw_offset : std::views::iota(0uz, fast_exponentiation(3uz, dimensions))) {
-            auto offset = offset_from<dimensions>(raw_offset);
-
+        for (auto offset : offsets) {
             if (auto u = std::ranges::find_if(offset, [](auto x) { return x; }); u == end(offset) || *u <= 0) continue;
 
             auto outer_box = box;
@@ -177,6 +193,8 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
         point_iterators.push_back(u);
     }
 
+    auto offsets = neighbour_offsets<dimensions>();
+
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
@@ -192,9 +210,7 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
                 }
             }
 
-            for (auto raw_offset : std::views::iota(0uz, fast_exponentiation(3uz, dimensions))) {
-                auto offset = offset_from<dimensions>(raw_offset);
-
+            for (auto offset : offsets) {
                 if (auto u = std::ranges::find_if(offset, [](auto x) { return x; }); u == end(offset) || *u <= 0)
                     continue;
 
