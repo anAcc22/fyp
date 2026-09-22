@@ -37,6 +37,14 @@ This can be done exactly like how you'd perform \textit{Merge Sort}. Surprisingl
 of our divide-and-conquer approach is no different from that of Merge Sort, and our time complexity
 is hence $\mathcal{O}(n \log n)$.
 
+\begin{aside}
+    Parallelising this algorithm is nontrivial, which is why we opted out of it. While it seems plausible
+    to assign a new thread to solve each subtree, we end up with way too many threads (in the order of $\mathcal{O}(n)$),
+    and the overhead costs of creating a thread (e.g., reserving a new stack) slow down the system far more
+    than any potential savings. Of course, a smarter solution would opt for tools like
+    thread pools to keep the thread count manageable, but figuring out the right allocation is pretty tricky as well.
+\end{aside}
+
 \subsection{Sweepline}
 
 One downside of divide-and-conquer is the runtime overhead of the recursive calls. An alternative
@@ -50,6 +58,12 @@ point $(x_{0}, y_{0})$, we only need to check points in the set with $y \in (y_{
 Using a similar box analogy, one may prove we check a constant number of points, producing an
 overall complexity of $\mathcal{O}(n \log n)$. Implementation-wise, we use C\texttt{++}'s
 \texttt{std::set} that uses a balanced binary search tree (specifically a red-black tree) under the hood.
+
+\begin{aside}
+    Because of the sequential nature of the sweep, it's not easy to parallelise this algorithm
+    either. We require the rolling set of points sorted by $y$, and it's not feasible to have
+    some sort of shared set across independent sweeps.
+\end{aside}
 
 \subsection{Grid Decomposition}
 
@@ -71,6 +85,17 @@ Implementation-wise, we use the \textbf{SplitMix64} hash function paired with a 
 the moment we settled with the standard library's \code{std::unordered_map}. Despite
 the amortised $\mathcal{O}(1)$ lookup, its closed addressing scheme isn't particularly
 cache-friendly.
+
+\begin{aside}
+    Finally, we have a nontrivial algorithm that's worth multithreading. Unlike brute force,
+    where we made each thread responsible for a set of points, this time let's have each
+    thread take charge of a set of squares instead. As usual, we'll allocate a roughly 
+    equal number of squares to each thread. Since viewing points in neighbouring squares
+    is a read-only operation, we don't need to guard it from data races. One implementation
+    detail is to extract all the iterators beforehand, and not to be misled by
+    the sneaky \code{std::views::stride(t)} (it doesn't allow for a random access jump when
+    iterating over \code{std::unordered_map}).
+\end{aside}
 
 \section{Beyond Two Dimensions}
 
@@ -125,3 +150,24 @@ Of course, things break down at higher dimensions because points become sparse,
 and the contribution of each dimension towards the overall distance is tinier. Eventually,
 we end up needing to search both subtrees. Fortunately, it just degrades to the brute force,
 unlike general grid decomposition that mandates searching all neighbouring hypercubes.
+
+\begin{aside}
+    Given how promising the $k$-dimensional tree is, it'd be sweet if we could somehow
+    parallelise it. Between the build and query phases, the latter seems more straightforward
+    to parallelise. In fact, because retrieving the closest pair is just making $n$
+    queries, we may simply allocate each thread to a set of queries. Though one might
+    think it's yet another embarrassingly parallel problem, it turns out there's some nuance
+    to it.
+
+    Observe that the smaller the current best distance, the more effective the pruning.
+    Decoupling the queries across threads leads to improvements for sure, but the speedup
+    isn't as great as we'd expect since the threads can't use the best answer from other
+    threads to improve their search. Thankfully, an easy way to share state is through an
+    atomic like \code{std::atomic<int64_t>}. The next question is to decide when
+    to update this global best. As correct as it appears to update it during recursion,
+    putting it in the hot path is likely to hurt more than it helps, even with the
+    most lenient memory order, that is, \code{std::memory_order_relaxed}. Therefore,
+    we'd rather do a quick update at the end of each point query. Not only do you
+    now enjoy extra pruning through the shared global best distance, it comes without
+    paying the full price of synchronisation overheads.
+\end{aside}

@@ -4,6 +4,7 @@
 #include "multithreading.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <numeric>
 #include <ranges>
@@ -27,7 +28,8 @@ void build_kd_tree(std::vector<Point<dimensions>> &points, size_t l, size_t r, s
 template <size_t dimensions>
 void find_and_improve_with_kd_tree(
     const std::vector<Point<dimensions>> &points, size_t l, size_t r, size_t depth, size_t query_index,
-    ClosestPair<Point<dimensions>> &closest_pair) {
+    ClosestPair<Point<dimensions>> &closest_pair,
+    int64_t outside_bound = ClosestPair<Point<dimensions>>::INFINITE_GAP) {
     if (!(l < r)) return;
 
     auto axis  = depth % dimensions;
@@ -45,11 +47,11 @@ void find_and_improve_with_kd_tree(
         std::swap(near_r, far_r);
     }
 
-    find_and_improve_with_kd_tree(points, near_l, near_r, depth + 1, query_index, closest_pair);
+    find_and_improve_with_kd_tree(points, near_l, near_r, depth + 1, query_index, closest_pair, outside_bound);
 
-    if (gap_to_plane * gap_to_plane >= closest_pair.gap) return;
+    if (gap_to_plane * gap_to_plane >= std::min(closest_pair.gap, outside_bound)) return;
 
-    find_and_improve_with_kd_tree(points, far_l, far_r, depth + 1, query_index, closest_pair);
+    find_and_improve_with_kd_tree(points, far_l, far_r, depth + 1, query_index, closest_pair, outside_bound);
 }
 
 template <size_t dimensions>
@@ -74,12 +76,19 @@ ClosestPair<Point<dimensions>> parallel_kd_tree(std::vector<Point<dimensions>> p
     build_kd_tree(points, 0uz, n, 0uz);
 
     std::vector<ClosestPair<Point<dimensions>>> best_of_thread(THREAD_COUNT);
+    std::atomic<int64_t> shared_gap{ ClosestPair<Point<dimensions>>::INFINITE_GAP };
 
     auto solve = [&](size_t start_index) -> void {
         auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
         for (auto i = start_index; i < n; i += THREAD_COUNT) {
-            find_and_improve_with_kd_tree(points, 0uz, n, 0uz, i, closest_pair);
+            auto snapshot = shared_gap.load(std::memory_order_relaxed);
+            find_and_improve_with_kd_tree(points, 0uz, n, 0uz, i, closest_pair, snapshot);
+
+            auto current = shared_gap.load(std::memory_order_relaxed);
+            while (closest_pair.gap < current
+                   && !shared_gap.compare_exchange_weak(current, closest_pair.gap, std::memory_order_relaxed)) {
+            }
         }
 
         best_of_thread[start_index] = closest_pair;

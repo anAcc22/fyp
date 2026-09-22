@@ -7,15 +7,37 @@
 The algorithms are implemented and tested in C\texttt{++} for several reasons.
 
 \begin{itemize}
-  \item A low-level compiled language gives you realistic estimates on how fast these algorithms
-  actually are when they aren't held back by overheads like an interpreter.
-  \item You get precise control over memory layouts and whether things go on the stack or the
-  heap. For the most part, data structures like \texttt{std::array} are preferred because
-  they reduce pointer chasing and are more cache-friendly.
-  \item Multithreading is easy to perform in C\texttt{++}, thanks to tools like \texttt{std::jthread}.
-  Although theoretical time complexities are important, whether or not an algorithm is practical
-  and useful in real life also depends on how well it may be \textit{parallelised}.
+    \item A low-level compiled language gives you realistic estimates on how fast these algorithms
+    actually are when they aren't held back by overheads like an interpreter.
+    \item You get precise control over memory layouts and whether things go on the stack or the
+    heap. For the most part, data structures like \texttt{std::array} are preferred because
+    they reduce pointer chasing and are more cache-friendly.
+    \item Multithreading is easy to perform in C\texttt{++}, thanks to tools like \texttt{std::jthread}.
+    Although theoretical time complexities are important, whether or not an algorithm is practical
+    and useful in real life also depends on how well it may be \textit{parallelised}.
 \end{itemize}
+
+\begin{aside}
+    Brute force might be an \textit{embarrassingly parallel} algorithm, but it's still easy to write
+    a suboptimal implementation. With $n$ points and $t$ threads, one might think to split
+    the points into contiguous chunks of $\frac{n}{t}$ points each. The issue is that for the
+    points $p_{i}$ at the start, we have to match them with $p_{j}$, where $i < j$, and at
+    say $i = 0$, we check a huge number of points, whereas for a late $i$, there's nothing much to check.
+    Thus, the thread in charge of the first block bears a lot more work, and takes longer to finish.
+
+    To improve the distribution of work, let's implement a rule where point $i$ is handled by thread
+    $i \bmod t$. Each thread has its own local best, and at the end, we update the global pair
+    based on these local pairs. One advantage to this technique is that we avoid having to use
+    synchronisation primitives like atomics or mutexes (which add extra overhead) to protect the global
+    answer from race conditions.
+\end{aside}
+
+\begin{aside}
+    You may get the thread count using \code{std::thread::hardware_concurrency()}. On my machine
+    that's twelve threads. Unfortunately, this doesn't imply that we'll get a twelvefold speedup,
+    since the processor consists of both performance cores and efficiency cores, with the latter running
+    at only a fraction of the speed.
+\end{aside}
 
 \section{Point Generation}
 
@@ -32,3 +54,41 @@ to preserve precision and reduce operations is to avoid the square root altogeth
 compare squared distances instead. To spawn a set of points, we used the \textit{Mersenne Twister}
 pseudorandom number generator (\code{std::mt19937_64}) to achieve a uniform random distribution
 of points. Fixed seeds are also used to ensure fair benchmarking.
+
+\section{Correctness Checks}
+
+As we implement various (increasingly complicated) algorithms, it's essential to validate
+their correctness. The simplest way to do so is to use the brute-force algorithm as
+a baseline, and check if the squared distance (conveniently, an integer) between the
+closest pair is the same across a range of different test cases. From my personal
+experience, here are some common mistakes and pitfalls.
+
+\begin{itemize}
+    \item You get a best distance of \textit{zero}, even though brute force produced a nonzero value.
+    This is likely because in the inner loop, you wrote \code{int j = i}, instead of \code{int j = i + 1},
+    so you mistakenly used the same point twice.
+    \item You did not achieve the best distance. This might be because you failed to enumerate neighbours
+    correctly (e.g., during grid decomposition), or you messed up the base case in recursive algorithms
+    such as divide-and-conquer.
+    \item Strange and inconsistent behaviour across different runs. This might be a symptom of
+    \textit{undefined behaviour}, and the cause is usually out-of-bounds access, a data race (during
+    multithreading), or signed overflow.
+\end{itemize}
+
+\section{Benchmarking}
+
+To figure out which algorithms are ``better'' than others, the most practical approach
+is to measure their runtimes. There are some ground rules we set to provide the fairest
+comparison. First, point generation should never be considered as part of runtime; we'll
+always generate them before starting the clock. Next, points are fed to the solver by
+\textit{value}, not reference. Algorithms are free to mess with the dataset however they like,
+with the original dataset remaining unaffected. Third, you pay for the cost of building data
+structures, assuming you need one (e.g., grid decomposition). As long as meaningful work is being
+done to contribute to the solution, we feel that it should add to the measured runtime. Finally, fixed seeds
+are used to generate the datasets, ensuring replicable results.
+
+\begin{aside}
+    Well, I haven't quite decided on a good sample size at the moment...
+
+    We'll revisit this section another time.
+\end{aside}

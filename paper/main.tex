@@ -6,9 +6,19 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage[breakable]{tcolorbox}
 
 % inline code: type underscores and the like as-is, e.g. \code{std::unordered_map}
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+
+% side notes for the curious: \begin{aside} ... \end{aside}
+\newtcolorbox{aside}{
+  breakable,
+  colback=black!4, colframe=black,
+  boxrule=0.6pt, arc=0pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  before skip=12pt, after skip=12pt,
+  before upper={\setlength{\parskip}{0.6em}},
+}
 
 \title{Pushing the Quadratic Boundary when Computing a Closest Pair}
 \author{Author}
