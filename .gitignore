@@ -1,6 +1,9 @@
 *
 .venv
 !*.cpp
+!/paper
+!*.tex
+!main.pdf
 !*.hpp
 !Makefile
 !.gitignore

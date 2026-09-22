@@ -1,0 +1,34 @@
+% !TeX root = main.tex
+
+\chapter{Methodology}
+
+\section{Language Choice}
+
+The algorithms are implemented and tested in C\texttt{++} for several reasons.
+
+\begin{itemize}
+  \item A low-level compiled language gives you realistic estimates on how fast these algorithms
+  actually are when they aren't held back by overheads like an interpreter.
+  \item You get precise control over memory layouts and whether things go on the stack or the
+  heap. For the most part, data structures like \texttt{std::array} are preferred because
+  they reduce pointer chasing and are more cache-friendly.
+  \item Multithreading is easy to perform in C\texttt{++}, thanks to tools like \texttt{std::jthread}.
+  Although theoretical time complexities are important, whether or not an algorithm is practical
+  and useful in real life also depends on how well it may be \textit{parallelised}.
+\end{itemize}
+
+\section{Point Generation}
+
+A meaningful dataset should try and avoid degenerate cases like duplicate points. This
+necessarily forces a large-enough range to circumvent the Birthday Paradox. In addition,
+it should be easy to compute the distance between any two points, and compare distances
+accurately. In other words, let's avoid floating point operations. Not only is it easy to mess up
+comparisons, when adding floats together the ideal strategy is to sort them by size and add
+the smallest numbers first before merging with the large ones. And this adds extra overhead
+that detracts from the core task at hand.
+
+So \texttt{int} it is, and because we're working with \textit{Euclidean} distances, a trick
+to preserve precision and reduce operations is to avoid the square root altogether, and
+compare squared distances instead. To spawn a set of points, we used the \textit{Mersenne Twister}
+pseudorandom number generator (\code{std::mt19937_64}) to achieve a uniform random distribution
+of points. Fixed seeds are also used to ensure fair benchmarking.

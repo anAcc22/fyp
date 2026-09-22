@@ -1,0 +1,45 @@
+% !TeX root = main.tex
+
+\chapter{Introduction}
+
+Computing the distance between two points is a common geometrical task.
+A natural extension to that would be to find the \textit{closest pair} of points,
+i.e., the pair that yields the smallest distance. Assuming a point in $d$-dimensional
+space, computing the distance between two points takes $\mathcal{O}(d)$ time.
+There are $\binom{n}{2}$ pairs to check, forcing a total time complexity of
+$\mathcal{O}(d \cdot n^{2})$.
+
+In general, for large $d$, it's not possible to beat quadratic time in the \textit{worst case}, assuming the
+\textbf{Strong Exponential Time Hypothesis (SETH)}. Luckily for us, there are tricks to salvage
+the situation at low dimensions, and for practical applications like vector databases,
+people have ditched the intractable task of obtaining an exact solution, opting for
+approximate algorithms instead.
+
+\section{Duplicate Points}
+
+Depending on the circumstances in which these points were generated, it's quite possible that we
+end up with duplicate points. For example, consider the Birthday Paradox. While it seems strange
+that only $23$ people are required to produce a coin flip chance of having a shared birthday
+(the equivalent of two overlapping points), that's just how the probability checks out.
+
+One way to solve this problem would be to first sort the points and check adjacent items to see if
+they're equal. Another approach is to inject them into a \textit{hash set} one by one, and prior to the
+insertion, if the set already contains the point, we know a duplicate exists. The extra logarithmic
+factor in the former might seem burdensome, but it might actually beat the latter in terms of real
+runtime, considering hash sets in many languages are often plagued by high constant factors. Not to
+mention sorting also happens to be the first step in many of the subsequent algorithms, so the duplicate
+check arrives almost free in a sense.
+
+\section{Points on a Line ($d=1$)}
+
+At $d=1$, the points are just an array $a$ of scalar values, so one may simply sort $a$ and
+compare adjacent elements, consuming
+$\mathcal{O}(n \log n)$ time. If the range of values ($k = \max(a) - \min(a)$)
+is small enough, \textit{counting sort} may be exploited to solve the problem
+in $\mathcal{O}(n + k)$.
+
+At this juncture, it's natural to question if it's possible to achieve $\mathcal{O}(n)$
+irrespective of $k$, and as it turns out, there are randomised
+algorithms with linear expected time. These algorithms are rooted in
+the idea of \textit{decomposition}, and they generalise to higher dimensions as well.
+We'll elaborate more on the details when we get there.
