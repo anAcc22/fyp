@@ -108,7 +108,35 @@ cache-friendly.
 
 While the two-dimensional algorithms have proven encouraging, both theoretically and empirically,
 the real challenge is to solve the problem at higher dimensions, and this is where tools like
-divide-and-conquer begin to fall apart as you can't easily generalise them.
+divide-and-conquer and sweepline begin to fall apart as you can't easily generalise them.
+
+\subsection{An Attempt to Generalise Sweepline}
+
+To understand why scaling sweepline is hard, let's consider how one might refactor the current
+implementation. The core of the issue is to support queries where given some $\delta$ (the
+best distance so far), and the current point $(q_{1}, \dots, q_{d})$, we need to find all points such
+that along every axis, we have $|p_{i} - q_{i}| < \delta$. In two dimensions, we use a two-pointer
+approach to ensure the $x$ axis satisfies this condition, and on the $y$ axis,
+we maintain sorting through a balanced binary search tree. Everything hinges on the
+two-pointer sweep, because solving one-dimensional range queries is easy.
+
+Let's try to solve range queries for more than two dimensions. For a moment, let's forget
+about the two pointers; in just two dimensions, how may we support the range queries? An
+esoteric data structure comes to mind: the \textit{Merge Sort Tree}. It's basically a
+segment tree on the $x$ values, and each node in the segment tree stores its points sorted
+by $y$ values. To answer a query, we perform a binary search on each relevant node, and
+there are $\mathcal{O}(\log n)$ of them. Thus, query resolution only costs $\mathcal{O}(\log^{2} n)$.
+This idea may be generalised to any dimension; we may put a merge sort tree into
+the node of another merge sort tree (in the literature it's known as a \textit{range tree}),
+so at dimension $d$ it'll take $\mathcal{O}(\log^{d} n)$ time.
+
+For convenience, let's not bother with point updates, i.e., we'll build the massive
+tree once at the start and keep querying it repeatedly. Yes, we're dropping the sweep
+out of the sweepline, but ultimately the total time complexity is still an optimistic
+$\mathcal{O}(d \cdot n \log^{d} n)$. The limiting factor is no longer time but \textit{memory}. And
+since the size of the tree is $\mathcal{O}(d \cdot n \log^{d - 1} n)$, at say $n = 10^{4}$ and
+$d = 5$, we have already racked up gigabytes of memory. There's simply no space to
+store the data structure!
 
 \subsection{Grid Decomposition (Revisited)}
 
