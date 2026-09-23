@@ -3,6 +3,7 @@
 !*.cpp
 !/paper
 !*.tex
+!*.bib
 !main.pdf
 !*.hpp
 !Makefile

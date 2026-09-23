@@ -11,8 +11,8 @@ so let's begin with that.
 \subsection{Divide-and-conquer}
 
 Let's divide the set of points into two (approximately equal) halves. If $n$ is odd, the
-first set will just be of size $\lceil \frac{n}{2} \rceil$ and the second set will
-be of size $\lfloor \frac{n}{2} \rfloor$. Intuitively, we want those with smaller $x$
+first set will just be of size $\lceil \sfrac{n}{2} \rceil$ and the second set will
+be of size $\lfloor \sfrac{n}{2} \rfloor$. Intuitively, we want those with smaller $x$
 in one set and those with larger $x$ in the other. For convenience, we can sort the
 points beforehand, with the sorting key being the point vector itself, i.e., perform element-wise
 comparison (check who has the smaller $x$, else if they have equal $x$, compare by $y$ instead).
@@ -27,8 +27,8 @@ avoiding duplicate work.
 
 This ``box'' of width $2 \cdot \delta$ and height $\delta$ contains $\mathcal{O}(1)$ points. Consider
 the left and right squares composing this box. If we partitioned each square into a grid of four smaller
-sub-squares of width $\frac{\delta}{2}$, you may fit at most one point into each sub-square. Even
-if we had placed points as far apart as possible, the distance is still $\frac{\delta}{\sqrt{2}}$.
+sub-squares of width $\sfrac{\delta}{2}$, you may fit at most one point into each sub-square. Even
+if we had placed points as far apart as possible, the distance is still $\sfrac{\delta}{\sqrt{2}}$.
 If two points fitted in a sub-square, that'll imply we should have gotten a smaller answer
 from one of the sub-problems, producing a contradiction.
 
@@ -81,6 +81,13 @@ the closest pair as the grid width, but that brings us right back to the origina
 people discovered that taking the minimum distance of a bunch of random points (i.e., sample $n$ pairs)
 produces a grid width that works surprisingly well.
 
+The first version of the randomised grid approach was actually proposed by Rabin~\cite{rabin1976} half
+a century ago. In this version, he sampled about $\sqrt{n}$ points
+and took the distances produced by these points. This takes only $\mathcal{O}(n)$ time! He
+also proved that it runs in linear expected time. Many years later, it was Lipton~\cite{lipton2010}
+who discovered sampling random pairs worked too, and it made the analysis much easier (because each sampled distance
+is independent of the others).
+
 Implementation-wise, we use the \textbf{SplitMix64} hash function paired with a hash map. At
 the moment we settled with the standard library's \code{std::unordered_map}. Despite
 the amortised $\mathcal{O}(1)$ lookup, its closed addressing scheme isn't particularly
@@ -107,8 +114,44 @@ divide-and-conquer begin to fall apart as you can't easily generalise them.
 
 One neat property of grid decomposition is that it extends naturally to arbitrary dimensions.
 A square morphs into a hypercube, and now we need to check adjacent hypercubes instead. There's
-one big problem though; at dimension $d$, there are $\frac{3^{d} - 1}{2}$ neighbours to check, and
+one big problem though; at dimension $d$, there are $(3^{d} - 1)/2$ neighbours to check, and
 beyond a certain point, you're better off just brute-forcing.
+
+As pessimistic as it sounds, let's try to exploit the nature of the point distribution to
+improve the selection of the grid width. Knowing that we have a uniform random distribution,
+it's possible to work out how far, on average, a point is from its nearest neighbour, and then
+we could use that as a basis for our grid width. This is an ancient problem that was solved
+by Hertz in 1909 for points scattered through three-dimensional space~\cite{hertz1909}, and the
+same analysis extends to any dimension. For $n$ points spread uniformly through a box of volume $V$, the
+expected distance from a point to its nearest neighbour is
+\[
+    \mathbb{E}[R] = \Gamma\!\left(1 + \frac{1}{d}\right) \left(\frac{V}{n \, \omega_{d}}\right)^{1/d},
+\]
+where $\omega_{d} = \pi^{d/2} / \Gamma(\sfrac{d}{2} + 1)$ is the volume of a $d$-dimensional ball of
+radius $1$, and $\Gamma$ is Euler's \textit{Gamma function}. In our implementation,
+\code{unit_ball_volume} supplies $\omega_{d}$, \code{std::tgamma} the Gamma
+function, and \code{bounding_box_volume} measures $V$ from the points themselves.
+The function \code{expected_nearest_neighbour_distance} then puts
+the pieces together.
+
+While it's possible to use this result directly as the grid width, we hesitated to do so and
+went with double this expected value instead. One reason is that we don't want to have hypercubes that
+are too tiny; with fewer hypercubes, we waste less time on the hash lookups. Another, admittedly
+more important, reason is rooted in safety. An expected value is not the same as the actual value;
+if we use a grid width that's too small, we end up not finding anything at all, which is even worse.
+At small $n$ the variance is too high, and the formula isn't useful, so below
+\code{SMALL_POINT_COUNT} we fall back to random sampling.
+
+\begin{aside}
+     A more insidious bug caused by grid widths that are too small is reporting the wrong answer.
+     Let's say that we have two points $a$ and $b$ on a horizontal line, one at $x = 0.95w$
+     and the other at $x = 2.05w$. They have a distance of $1.1w$, though they won't end up
+     in adjacent squares. Let's also have a point $c$ at $x = 3.95w$; it'll be paired
+     with point $b$ and give a ``best'' distance of $1.9w$, even though we know the true
+     minimum is lower. Luckily, with the uniform random distribution such an edge case
+     is statistically very unlikely. For guaranteed correctness in arbitrary distributions, stick to
+     random sampling.
+\end{aside}
 
 \subsection{$k$-dimensional Tree}
 

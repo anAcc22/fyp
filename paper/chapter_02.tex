@@ -20,7 +20,7 @@ The algorithms are implemented and tested in C\texttt{++} for several reasons.
 \begin{aside}
     Brute force might be an \textit{embarrassingly parallel} algorithm, but it's still easy to write
     a suboptimal implementation. With $n$ points and $t$ threads, one might think to split
-    the points into contiguous chunks of $\frac{n}{t}$ points each. The issue is that for the
+    the points into contiguous chunks of $\sfrac{n}{t}$ points each. The issue is that for the
     points $p_{i}$ at the start, we have to match them with $p_{j}$, where $i < j$, and at
     say $i = 0$, we check a huge number of points, whereas for a late $i$, there's nothing much to check.
     Thus, the thread in charge of the first block bears a lot more work, and takes longer to finish.

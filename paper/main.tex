@@ -5,11 +5,15 @@
 \usepackage{lmodern}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{xfrac}
 \usepackage{graphicx}
 \usepackage[breakable]{tcolorbox}
 
 % inline code: type underscores and the like as-is, e.g. \code{std::unordered_map}
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+
+% let a line stretch a little further rather than push a long \code{} word into the margin
+\setlength{\emergencystretch}{3em}
 
 % side notes for the curious: \begin{aside} ... \end{aside}
 \newtcolorbox{aside}{
@@ -31,5 +35,8 @@
 \input{chapter_01}
 \input{chapter_02}
 \input{chapter_03}
+
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}
