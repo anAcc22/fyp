@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++23 -O2 -Wall -Wextra -g -MMD -MP
+CXXFLAGS = -std=c++23 -O2 -Wall -Wextra -g -MMD -MP -isystem third_party
 
 SOURCES = $(wildcard src/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <ranges>
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <format>
 #include <string>
@@ -57,6 +58,11 @@ std::array<int16_t, dimensions> offset_from(T raw_offset) {
 enum class GridWidthStrategy {
     Sampling,
     UniformRandomNearestNeighbor,
+};
+
+inline constexpr std::array ALL_GRID_WIDTH_STRATEGIES{
+    GridWidthStrategy::Sampling,
+    GridWidthStrategy::UniformRandomNearestNeighbor,
 };
 
 template <>

@@ -1,0 +1,19 @@
+dimensions     = [6]
+point_counts   = [2000, 4000, 6000, 8000]
+trial_count    = 5
+relative_check = true
+
+[[solvers]]
+name = "examine_all_pairs_in_parallel"
+
+[[solvers]]
+name             = "parallel_grid_decomposition"
+width_strategy   = "uniform_random_nearest_neighbor"
+width_multiplier = 2.0
+
+[[solvers]]
+name = "parallel_kd_tree"
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 1

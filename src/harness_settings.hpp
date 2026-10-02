@@ -4,6 +4,7 @@
 #include "benchmark.hpp"
 #include "grid.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -23,6 +24,18 @@ enum class SolverName {
     ExamineRandomPairs,
     Sweepline,
     DivideAndConquer,
+};
+
+inline constexpr std::array ALL_SOLVER_NAMES{
+    SolverName::ExamineAllPairs,
+    SolverName::ExamineAllPairsInParallel,
+    SolverName::KdTree,
+    SolverName::ParallelKdTree,
+    SolverName::GridDecomposition,
+    SolverName::ParallelGridDecomposition,
+    SolverName::ExamineRandomPairs,
+    SolverName::Sweepline,
+    SolverName::DivideAndConquer,
 };
 
 template <>
@@ -73,6 +86,8 @@ struct SolverSettings {
     SolverName name;
     SolverParams params = std::monostate{};
 };
+
+using ErrorMessage = std::string;
 
 struct HarnessSettings {
     std::vector<Dimensions> dimensions;

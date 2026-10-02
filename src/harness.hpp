@@ -7,15 +7,20 @@
 #include <cstddef>
 #include <expected>
 #include <filesystem>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <vector>
 
-inline constexpr auto SUPPORTED_DIMENSIONS = std::to_array<Dimensions>({ 2, 3, 4, 6, 8, 10, 12, 16, 24, 32 });
+inline constexpr Dimensions MAX_SUPPORTED_DIMENSIONS = 128;
+
+inline constexpr auto SUPPORTED_DIMENSIONS = [] {
+    std::array<Dimensions, MAX_SUPPORTED_DIMENSIONS> dimensions{};
+    std::iota(begin(dimensions), end(dimensions), Dimensions{ 1 });
+    return dimensions;
+}();
 
 inline constexpr Dimensions MAX_GRID_DIMENSIONS = 12;
-
-using ErrorMessage = std::string;
 
 struct TrialResult {
     size_t solver_index;
