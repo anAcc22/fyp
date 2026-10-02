@@ -7,6 +7,8 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <format>
+#include <string>
 #include <functional>
 
 struct GridSquare {
@@ -63,6 +65,14 @@ struct GridDecompositionParams {
     GridWidthStrategy width_strategy = GridWidthStrategy::Sampling;
     // NOTE: only used by GridWidthStrategy::UniformRandomNearestNeighbor
     double width_multiplier = 2.0;
+};
+
+template <>
+struct std::formatter<GridDecompositionParams> : std::formatter<std::string> {
+    auto format(const GridDecompositionParams &params, auto &ctx) const {
+        return std::format_to(
+            ctx.out(), "width_strategy={}, width_multiplier={}", params.width_strategy, params.width_multiplier);
+    }
 };
 
 template <size_t dimensions>

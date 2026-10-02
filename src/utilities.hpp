@@ -6,6 +6,9 @@
 #include <ranges>
 #include <algorithm>
 #include <cstdint>
+#include <format>
+#include <string>
+#include <utility>
 #include <numeric>
 #include <numbers>
 #include <vector>
@@ -54,6 +57,19 @@ std::array<int16_t, dimensions> offset_from(T raw_offset) {
 enum class GridWidthStrategy {
     Sampling,
     UniformRandomNearestNeighbor,
+};
+
+template <>
+struct std::formatter<GridWidthStrategy> : std::formatter<std::string> {
+    auto format(GridWidthStrategy strategy, auto &ctx) const {
+        switch (strategy) {
+            case GridWidthStrategy::Sampling:
+                return std::format_to(ctx.out(), "sampling");
+            case GridWidthStrategy::UniformRandomNearestNeighbor:
+                return std::format_to(ctx.out(), "uniform_random_nearest_neighbor");
+        }
+        std::unreachable();
+    }
 };
 
 template <size_t dimensions>

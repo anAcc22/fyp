@@ -4,12 +4,21 @@
 #include "geometry.hpp"
 
 #include <cstddef>
+#include <format>
+#include <string>
 #include <random>
 #include <ranges>
 #include <vector>
 
 struct ExamineRandomPairsParams {
     size_t attempts_per_point = 1;
+};
+
+template <>
+struct std::formatter<ExamineRandomPairsParams> : std::formatter<std::string> {
+    auto format(const ExamineRandomPairsParams &params, auto &ctx) const {
+        return std::format_to(ctx.out(), "attempts_per_point={}", params.attempts_per_point);
+    }
 };
 
 template <typename PointType>

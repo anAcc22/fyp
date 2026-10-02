@@ -1,25 +1,19 @@
 #pragma once
 
-#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <concepts>
-#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
-#include <ranges>
+#include <utility>
 #include <vector>
 
+#include "brute_force.hpp"
 #include "generator.hpp"
 #include "geometry.hpp"
 
-template <typename PointType>
-struct RunStatistics {
-    ClosestPair<PointType> closest_pair;
-    std::chrono::duration<double> time_taken;
-    std::optional<double> ratio = std::nullopt;
-};
+using Seconds = std::chrono::duration<double>;
 
 enum class RelativeCheck {
     False,
@@ -33,41 +27,28 @@ inline double approximation_ratio_of(int64_t found_gap, int64_t true_gap) {
 
 template <typename PointType>
 int64_t true_closest_gap_within(const std::vector<PointType> &points) {
-    auto n = points.size();
-
-    auto gaps_from = [&](size_t i) {
-        return std::views::iota(i + 1, n) | std::views::transform([&, i](size_t j) {
-                   return squared_euclidean_distance_between(points[i], points[j]);
-               });
-    };
-
-    return std::ranges::min(std::views::iota(0uz, n) | std::views::transform(gaps_from) | std::views::join);
+    return examine_all_pairs_in_parallel(points).gap;
 }
 
+struct SolverMeasurement {
+    Seconds runtime;
+    std::optional<double> ratio = std::nullopt;
+};
+
 template <typename PointType>
-RunStatistics<PointType>
-time_taken_by(std::invocable<std::vector<PointType>> auto solver, size_t point_count, RelativeCheck relative_check) {
-    Trial trial{
-        .base_seed    = DEFAULT_BASE_SEED,
-        .dimensions   = PointType::dimension_count,
-        .point_count  = point_count,
-        .trial_number = 1,
-    };
-
-    auto points = generate_points<PointType>(trial);
-    save_points_to_disk(trial, points);
-
+SolverMeasurement measure_solver(
+    std::invocable<std::vector<PointType>> auto solver, const std::vector<PointType> &dataset, Trial trial,
+    std::optional<int64_t> true_gap) {
     solver_randomiser.seed(seed_for(trial, TrialSeedSuffix::Solver));
 
+    auto dataset_copy = dataset;
+
     auto start_time   = std::chrono::steady_clock::now();
-    auto closest_pair = solver(points);
+    auto closest_pair = solver(std::move(dataset_copy));
     auto end_time     = std::chrono::steady_clock::now();
 
-    RunStatistics stats = { .closest_pair = closest_pair, .time_taken = end_time - start_time };
-
-    if (relative_check == RelativeCheck::True) {
-        stats.ratio = approximation_ratio_of(closest_pair.gap, true_closest_gap_within(points));
-    }
-
-    return stats;
+    return {
+        .runtime = end_time - start_time,
+        .ratio   = true_gap.transform([&](int64_t gap) { return approximation_ratio_of(closest_pair.gap, gap); }),
+    };
 }
