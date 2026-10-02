@@ -8,11 +8,15 @@
 #include <ranges>
 #include <vector>
 
-template <typename PointType, size_t scaling_factor = 1>
-ClosestPair<PointType> examine_random_pairs(std::vector<PointType> points) {
+struct ExamineRandomPairsParams {
+    size_t attempts_per_point = 1;
+};
+
+template <typename PointType>
+ClosestPair<PointType> examine_random_pairs(std::vector<PointType> points, ExamineRandomPairsParams params) {
     auto n            = points.size();
     auto closest_pair = ClosestPair<PointType>::init();
-    auto attempts     = scaling_factor * n;
+    auto attempts     = params.attempts_per_point * n;
 
     std::uniform_int_distribution index_generator(0uz, n - 1);
 

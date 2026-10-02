@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -44,8 +45,8 @@ int64_t true_closest_gap_within(const std::vector<PointType> &points) {
 }
 
 template <typename PointType>
-RunStatistics<PointType> time_taken_by(
-    ClosestPair<PointType> (*solver)(std::vector<PointType>), size_t point_count, RelativeCheck relative_check) {
+RunStatistics<PointType>
+time_taken_by(std::invocable<std::vector<PointType>> auto solver, size_t point_count, RelativeCheck relative_check) {
     auto params       = generator_for(point_count, PointType::dimension_count);
     auto points       = generate_points<PointType>(params);
     auto start_time   = std::chrono::steady_clock::now();

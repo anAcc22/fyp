@@ -56,8 +56,6 @@ enum class GridWidthStrategy {
     UniformRandomNearestNeighbor,
 };
 
-inline constexpr double DEFAULT_GRID_WIDTH_MULTIPLIER = 2.0;
-
 template <size_t dimensions>
 double unit_ball_volume() {
     return std::pow(std::numbers::pi, dimensions / 2.0) / std::tgamma(dimensions / 2.0 + 1.0);
@@ -76,8 +74,8 @@ double bounding_box_volume(const std::vector<Point<dimensions>> &points) {
     return volume;
 }
 
-template <size_t dimensions, double multiplier>
-int64_t expected_nearest_neighbour_distance(const std::vector<Point<dimensions>> &points) {
+template <size_t dimensions>
+int64_t expected_nearest_neighbour_distance(const std::vector<Point<dimensions>> &points, double multiplier) {
     auto ball_volume
         = bounding_box_volume(points) / (static_cast<double>(points.size()) * unit_ball_volume<dimensions>());
 

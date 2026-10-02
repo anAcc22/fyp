@@ -59,17 +59,22 @@ std::vector<std::array<int16_t, dimensions>> neighbour_offsets() {
 
 inline constexpr auto SMALL_POINT_COUNT = 36;
 
-template <
-    size_t dimensions, GridWidthStrategy strategy = GridWidthStrategy::Sampling,
-    double multiplier = DEFAULT_GRID_WIDTH_MULTIPLIER>
-ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>> points) {
+struct GridDecompositionParams {
+    GridWidthStrategy width_strategy = GridWidthStrategy::Sampling;
+    // NOTE: only used by GridWidthStrategy::UniformRandomNearestNeighbor
+    double width_multiplier = 2.0;
+};
+
+template <size_t dimensions>
+ClosestPair<Point<dimensions>>
+grid_decomposition(std::vector<Point<dimensions>> points, GridDecompositionParams params) {
     auto n = points.size();
 
     auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
     int64_t grid_width{};
 
-    if (strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
+    if (params.width_strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
         int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
@@ -93,7 +98,7 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
 
         grid_width = ceiling_square_root(grid_width_squared);
     } else {
-        grid_width = expected_nearest_neighbour_distance<dimensions, multiplier>(points);
+        grid_width = expected_nearest_neighbour_distance(points, params.width_multiplier);
     }
 
     std::unordered_map<GridBox<dimensions>, std::vector<Point<dimensions>>> points_by_box;
@@ -139,17 +144,16 @@ ClosestPair<Point<dimensions>> grid_decomposition(std::vector<Point<dimensions>>
     return closest_pair;
 }
 
-template <
-    size_t dimensions, GridWidthStrategy strategy = GridWidthStrategy::Sampling,
-    double multiplier = DEFAULT_GRID_WIDTH_MULTIPLIER>
-ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dimensions>> points) {
+template <size_t dimensions>
+ClosestPair<Point<dimensions>>
+parallel_grid_decomposition(std::vector<Point<dimensions>> points, GridDecompositionParams params) {
     auto n = points.size();
 
     auto closest_pair = ClosestPair<Point<dimensions>>::init();
 
     int64_t grid_width{};
 
-    if (strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
+    if (params.width_strategy == GridWidthStrategy::Sampling || n <= SMALL_POINT_COUNT) {
         int64_t grid_width_squared = std::numeric_limits<int64_t>::max();
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
@@ -173,7 +177,7 @@ ClosestPair<Point<dimensions>> parallel_grid_decomposition(std::vector<Point<dim
 
         grid_width = ceiling_square_root(grid_width_squared);
     } else {
-        grid_width = expected_nearest_neighbour_distance<dimensions, multiplier>(points);
+        grid_width = expected_nearest_neighbour_distance(points, params.width_multiplier);
     }
 
     std::unordered_map<GridBox<dimensions>, std::vector<Point<dimensions>>> points_by_box;
