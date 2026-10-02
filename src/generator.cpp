@@ -2,25 +2,19 @@
 #include "sweepline.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
+#include <format>
 #include <fstream>
-#include <map>
 #include <print>
 #include <ranges>
-#include <string>
 
 int32_t safe_max_coordinate_at(Dimensions dimensions) {
     constexpr static int64_t LIMIT = 1'000'000'000'000'000'000LL;
     return static_cast<int32_t>(std::sqrt(static_cast<double>(LIMIT) / dimensions));
 }
 
-Generator generator_for(size_t point_count, Dimensions dimensions) {
-    return Generator{ .point_count = point_count, .min_value = 0, .max_value = safe_max_coordinate_at(dimensions) };
-}
-
-void save_points_to_disk(Generator params, const std::vector<Point2D> &points) {
-    auto path = "data/points_2D_only_" + std::to_string(params.point_count) + ".csv";
+void save_points_to_disk(Trial trial, const std::vector<Point2D> &points) {
+    auto path = std::format("data/points_2D_only_{}_trial_{:02}.csv", trial.point_count, trial.trial_number);
     std::ofstream file(path);
     std::println(file, "x,y,is_part_of_shortest_pair");
 

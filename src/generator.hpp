@@ -1,28 +1,50 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
-#include <concepts>
-#include <compare>
-#include <random>
+#include <cstddef>
+#include <cstdint>
+#include <format>
 #include <fstream>
+#include <print>
+#include <random>
+#include <ranges>
+#include <string>
+#include <utility>
 #include <vector>
-#include <map>
 
 #include "geometry.hpp"
+#include "utilities.hpp"
 
-constexpr auto SEED = 42;
+inline constexpr uint64_t DEFAULT_BASE_SEED = 42;
 
-inline std::mt19937_64 point_generator_randomiser(SEED);
-inline std::mt19937_64 point_selector_randomiser(SEED);
+inline std::mt19937_64 solver_randomiser(DEFAULT_BASE_SEED);
 
 using Dimensions = size_t;
 
-struct Generator {
-    size_t point_count = 0;
-    int32_t min_value = 0, max_value = 0;
-    friend auto operator<=>(Generator, Generator) = default;
+struct Trial {
+    uint64_t base_seed;
+    Dimensions dimensions;
+    size_t point_count;
+    size_t trial_number;
 };
+
+enum class TrialSeedSuffix {
+    Dataset,
+    Solver,
+};
+
+inline uint64_t seed_for(Trial trial, TrialSeedSuffix suffix) {
+    auto seed = trial.base_seed;
+
+    for (uint64_t part : { trial.dimensions,
+                           trial.point_count,
+                           trial.trial_number,
+                           static_cast<uint64_t>(std::to_underlying(suffix)) }) {
+        seed = mix_bits(seed ^ mix_bits(part));
+    }
+
+    return seed;
+}
 
 inline void randomise_coordinates(Point2D &point, auto &randomiser, auto &distribution) {
     point.x = distribution(randomiser);
@@ -36,14 +58,12 @@ void randomise_coordinates(Point<dimensions> &point, auto &randomiser, auto &dis
 
 int32_t safe_max_coordinate_at(Dimensions dimensions);
 
-Generator generator_for(size_t point_count, Dimensions dimensions);
-
-void save_points_to_disk(Generator params, const std::vector<Point2D> &points);
+void save_points_to_disk(Trial trial, const std::vector<Point2D> &points);
 
 template <size_t dimensions>
-void save_points_to_disk(Generator params, const std::vector<Point<dimensions>> &points) {
+void save_points_to_disk(Trial trial, const std::vector<Point<dimensions>> &points) {
     auto path
-        = "data/general_points_" + std::to_string(dimensions) + "D_" + std::to_string(params.point_count) + ".csv";
+        = std::format("data/general_points_{}D_{}_trial_{:02}.csv", dimensions, trial.point_count, trial.trial_number);
 
     std::ofstream file(path);
 
@@ -64,20 +84,18 @@ void save_points_to_disk(Generator params, const std::vector<Point<dimensions>> 
 }
 
 template <typename PointType>
-std::vector<PointType> generate_points(Generator params) {
-    assert(params.point_count >= 2);
+std::vector<PointType> generate_points(Trial trial) {
+    assert(trial.point_count >= 2);
+    assert(trial.dimensions == PointType::dimension_count);
 
-    static std::map<Generator, std::vector<PointType>> cached_points;
-    if (cached_points.contains(params)) return cached_points[params];
+    std::mt19937_64 dataset_randomiser(seed_for(trial, TrialSeedSuffix::Dataset));
+    std::uniform_int_distribution coordinate_distribution(0, safe_max_coordinate_at(trial.dimensions));
 
-    std::vector<PointType> points(params.point_count);
-    std::uniform_int_distribution coord_generator(params.min_value, params.max_value);
+    std::vector<PointType> points(trial.point_count);
 
     for (auto &point : points) {
-        randomise_coordinates(point, point_generator_randomiser, coord_generator);
+        randomise_coordinates(point, dataset_randomiser, coordinate_distribution);
     }
 
-    save_points_to_disk(params, points);
-
-    return cached_points[params] = points;
+    return points;
 }

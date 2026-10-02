@@ -7,6 +7,7 @@ sns.set_theme(style="ticks")
 
 DIMENSIONS = [2, 4, 6, 8, 10]
 POINT_COUNT = 1_000
+TRIAL_NUMBER = 1
 SAMPLE_SIZE = 40_000
 
 VIOLIN_COLOURS = ["#33cc33", "#e6194b", "#ffc61a", "#4363d8", "#911eb4"]
@@ -16,7 +17,7 @@ randomiser = np.random.default_rng(0)
 
 
 def pairwise_distances(dimensions):
-    coords = pd.read_csv(f"data/general_points_{dimensions}D_{POINT_COUNT}.csv").to_numpy(dtype=float)
+    coords = pd.read_csv(f"data/general_points_{dimensions}D_{POINT_COUNT}_trial_{TRIAL_NUMBER:02}.csv").to_numpy(dtype=float)
     squared = (coords**2).sum(axis=1)
     squared_distances = squared[:, None] + squared[None, :] - 2 * coords @ coords.T
     upper = np.triu_indices(len(coords), k=1)

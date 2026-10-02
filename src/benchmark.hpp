@@ -47,8 +47,18 @@ int64_t true_closest_gap_within(const std::vector<PointType> &points) {
 template <typename PointType>
 RunStatistics<PointType>
 time_taken_by(std::invocable<std::vector<PointType>> auto solver, size_t point_count, RelativeCheck relative_check) {
-    auto params       = generator_for(point_count, PointType::dimension_count);
-    auto points       = generate_points<PointType>(params);
+    Trial trial{
+        .base_seed    = DEFAULT_BASE_SEED,
+        .dimensions   = PointType::dimension_count,
+        .point_count  = point_count,
+        .trial_number = 1,
+    };
+
+    auto points = generate_points<PointType>(trial);
+    save_points_to_disk(trial, points);
+
+    solver_randomiser.seed(seed_for(trial, TrialSeedSuffix::Solver));
+
     auto start_time   = std::chrono::steady_clock::now();
     auto closest_pair = solver(points);
     auto end_time     = std::chrono::steady_clock::now();

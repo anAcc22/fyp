@@ -21,8 +21,8 @@ ClosestPair<PointType> examine_random_pairs(std::vector<PointType> points, Exami
     std::uniform_int_distribution index_generator(0uz, n - 1);
 
     for (auto _ : std::views::iota(0uz, attempts)) {
-        auto i = index_generator(point_selector_randomiser);
-        auto j = index_generator(point_selector_randomiser);
+        auto i = index_generator(solver_randomiser);
+        auto j = index_generator(solver_randomiser);
 
         if (i == j) continue;
 

@@ -79,8 +79,8 @@ grid_decomposition(std::vector<Point<dimensions>> points, GridDecompositionParam
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
         for (auto _ : std::views::iota(0uz, n)) {
-            auto i = index_generator(point_selector_randomiser);
-            auto j = index_generator(point_selector_randomiser);
+            auto i = index_generator(solver_randomiser);
+            auto j = index_generator(solver_randomiser);
 
             if (i == j) continue;
 
@@ -158,8 +158,8 @@ parallel_grid_decomposition(std::vector<Point<dimensions>> points, GridDecomposi
         std::uniform_int_distribution index_generator(0uz, n - 1);
 
         for (auto _ : std::views::iota(0uz, n)) {
-            auto i = index_generator(point_selector_randomiser);
-            auto j = index_generator(point_selector_randomiser);
+            auto i = index_generator(solver_randomiser);
+            auto j = index_generator(solver_randomiser);
 
             if (i == j) continue;
 
