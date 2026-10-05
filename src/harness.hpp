@@ -3,6 +3,7 @@
 #include "generator.hpp"
 #include "harness_settings.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <expected>
@@ -12,11 +13,14 @@
 #include <string>
 #include <vector>
 
-inline constexpr Dimensions MAX_SUPPORTED_DIMENSIONS = 32;
+inline constexpr Dimensions MAX_CONSECUTIVE_DIMENSIONS = 32;
+
+inline constexpr auto LARGE_DIMENSIONS = std::to_array<Dimensions>({ 64, 128, 256 });
 
 inline constexpr auto SUPPORTED_DIMENSIONS = [] {
-    std::array<Dimensions, MAX_SUPPORTED_DIMENSIONS> dimensions{};
-    std::iota(begin(dimensions), end(dimensions), Dimensions{ 1 });
+    std::array<Dimensions, MAX_CONSECUTIVE_DIMENSIONS + LARGE_DIMENSIONS.size()> dimensions{};
+    std::iota(begin(dimensions), begin(dimensions) + MAX_CONSECUTIVE_DIMENSIONS, Dimensions{ 1 });
+    std::ranges::copy(LARGE_DIMENSIONS, begin(dimensions) + MAX_CONSECUTIVE_DIMENSIONS);
     return dimensions;
 }();
 

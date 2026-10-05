@@ -40,6 +40,8 @@ bool has_matching_params(const SolverSettings &solver) {
             return std::holds_alternative<ExamineNeighboursAlongRandomDirectionsParams>(solver.params);
         case SolverName::ExamineNeighboursAlongZOrderCurve:
             return std::holds_alternative<ExamineNeighboursAlongZOrderCurveParams>(solver.params);
+        case SolverName::BestFirstKdTree:
+            return std::holds_alternative<BestFirstKdTreeParams>(solver.params);
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition:
             return std::holds_alternative<GridDecompositionParams>(solver.params);
@@ -69,6 +71,12 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
     for (const auto &solver : settings.solvers) {
         if (!has_matching_params(solver)) {
             error_messages.push_back(std::format("{} was given the wrong kind of params", solver.name));
+        }
+
+        if (auto *params = std::get_if<BestFirstKdTreeParams>(&solver.params)) {
+            if (params->comparisons_per_point < 1) {
+                error_messages.push_back(std::format("{} needs a comparisons_per_point of at least 1", solver.name));
+            }
         }
 
         if (auto *params = std::get_if<ExamineRandomPairsParams>(&solver.params)) {
@@ -167,6 +175,11 @@ SolverMeasurement run_solver(
                 return examine_neighbours_along_z_order_curve(points, params);
             };
             return measure_solver(neighbours_along_z_order_curve, dataset, trial, true_gap);
+        }
+        case SolverName::BestFirstKdTree: {
+            auto params     = std::get<BestFirstKdTreeParams>(solver.params);
+            auto best_first = [params](std::vector<PointType> points) { return best_first_kd_tree(points, params); };
+            return measure_solver(best_first, dataset, trial, true_gap);
         }
         case SolverName::Sweepline:
             if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, true_gap);

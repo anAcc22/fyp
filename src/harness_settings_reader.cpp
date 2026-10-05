@@ -180,6 +180,23 @@ void read_solver(
             }
             return;
         }
+        case SolverName::BestFirstKdTree: {
+            constexpr std::array<TomlKey, 2> known_keys{ "name", "comparisons_per_point" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            auto comparisons_per_point_values
+                = one_or_more_values_at<size_t>(solver_table, "comparisons_per_point", location, error_messages)
+                      .value_or(std::vector{ BestFirstKdTreeParams{}.comparisons_per_point });
+
+            for (auto comparisons_per_point : comparisons_per_point_values) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = BestFirstKdTreeParams{ .comparisons_per_point = comparisons_per_point },
+                    });
+            }
+            return;
+        }
         case SolverName::ExamineNeighboursAlongZOrderCurve: {
             constexpr std::array<TomlKey, 3> known_keys{ "name", "shift_count", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);

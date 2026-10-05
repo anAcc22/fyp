@@ -1,4 +1,4 @@
-dimensions     = [16]
+dimensions     = [64]
 point_counts   = [2000, 4000, 6000, 8000]
 trial_count    = 5
 relative_check = true
@@ -24,10 +24,14 @@ neighbours_per_point = 32
 
 [[solvers]]
 name                 = "examine_neighbours_along_random_directions"
-direction_count      = [4, 16]
+direction_count      = 4
 neighbours_per_point = 32
 
 [[solvers]]
 name                 = "examine_neighbours_along_z_order_curve"
-shift_count          = [4, 16]
+shift_count          = 4
 neighbours_per_point = 32
+
+[[solvers]]
+name                  = "best_first_kd_tree"
+comparisons_per_point = 128

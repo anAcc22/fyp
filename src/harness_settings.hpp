@@ -25,6 +25,7 @@ enum class SolverName {
     ExamineNeighboursAlongEachAxis,
     ExamineNeighboursAlongRandomDirections,
     ExamineNeighboursAlongZOrderCurve,
+    BestFirstKdTree,
     Sweepline,
     DivideAndConquer,
 };
@@ -40,6 +41,7 @@ inline constexpr std::array ALL_SOLVER_NAMES{
     SolverName::ExamineNeighboursAlongEachAxis,
     SolverName::ExamineNeighboursAlongRandomDirections,
     SolverName::ExamineNeighboursAlongZOrderCurve,
+    SolverName::BestFirstKdTree,
     SolverName::Sweepline,
     SolverName::DivideAndConquer,
 };
@@ -68,6 +70,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
                 return std::format_to(ctx.out(), "examine_neighbours_along_random_directions");
             case SolverName::ExamineNeighboursAlongZOrderCurve:
                 return std::format_to(ctx.out(), "examine_neighbours_along_z_order_curve");
+            case SolverName::BestFirstKdTree:
+                return std::format_to(ctx.out(), "best_first_kd_tree");
             case SolverName::Sweepline:
                 return std::format_to(ctx.out(), "sweepline");
             case SolverName::DivideAndConquer:
@@ -79,7 +83,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
 
 using SolverParams = std::variant<
     std::monostate, ExamineRandomPairsParams, ExamineNeighboursAlongEachAxisParams,
-    ExamineNeighboursAlongRandomDirectionsParams, ExamineNeighboursAlongZOrderCurveParams, GridDecompositionParams>;
+    ExamineNeighboursAlongRandomDirectionsParams, ExamineNeighboursAlongZOrderCurveParams, BestFirstKdTreeParams,
+    GridDecompositionParams>;
 
 template <>
 struct std::formatter<SolverParams> : std::formatter<std::string> {
