@@ -30,7 +30,8 @@ struct TrialResult {
     size_t solver_index;
     Trial trial;
     Seconds runtime;
-    std::optional<double> ratio = std::nullopt;
+    std::optional<double> ratio            = std::nullopt;
+    std::optional<double> normalised_score = std::nullopt;
 };
 
 std::expected<std::vector<TrialResult>, std::vector<ErrorMessage>> run_harness(const HarnessSettings &settings);

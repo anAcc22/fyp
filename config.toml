@@ -16,11 +16,11 @@ relative_check = true
 
 [[solvers]]
 name               = "examine_random_pairs"
-attempts_per_point = 512
+attempts_per_point = 128
 
-[[solvers]]
-name                 = "examine_neighbours_along_each_axis"
-neighbours_per_point = 32
+# [[solvers]]
+# name                 = "examine_neighbours_along_each_axis"
+# neighbours_per_point = 32
 
 [[solvers]]
 name                 = "examine_neighbours_along_random_directions"

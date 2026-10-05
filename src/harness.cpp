@@ -127,66 +127,66 @@ std::vector<Point2D> as_points_2d(const std::vector<Point<2>> &dataset) {
 template <size_t dimensions>
 SolverMeasurement run_solver(
     const SolverSettings &solver, const std::vector<Point<dimensions>> &dataset, Trial trial,
-    std::optional<int64_t> true_gap) {
+    std::optional<ReferenceDistances> reference) {
     using PointType = Point<dimensions>;
 
     switch (solver.name) {
         case SolverName::ExamineAllPairs:
-            return measure_solver(examine_all_pairs<PointType>, dataset, trial, true_gap);
+            return measure_solver(examine_all_pairs<PointType>, dataset, trial, reference);
         case SolverName::ExamineAllPairsInParallel:
-            return measure_solver(examine_all_pairs_in_parallel<PointType>, dataset, trial, true_gap);
+            return measure_solver(examine_all_pairs_in_parallel<PointType>, dataset, trial, reference);
         case SolverName::KdTree:
-            return measure_solver(kd_tree<dimensions>, dataset, trial, true_gap);
+            return measure_solver(kd_tree<dimensions>, dataset, trial, reference);
         case SolverName::ParallelKdTree:
-            return measure_solver(parallel_kd_tree<dimensions>, dataset, trial, true_gap);
+            return measure_solver(parallel_kd_tree<dimensions>, dataset, trial, reference);
         case SolverName::GridDecomposition: {
             auto params = std::get<GridDecompositionParams>(solver.params);
             auto grid   = [params](std::vector<PointType> points) { return grid_decomposition(points, params); };
-            return measure_solver(grid, dataset, trial, true_gap);
+            return measure_solver(grid, dataset, trial, reference);
         }
         case SolverName::ParallelGridDecomposition: {
             auto params = std::get<GridDecompositionParams>(solver.params);
             auto grid = [params](std::vector<PointType> points) { return parallel_grid_decomposition(points, params); };
-            return measure_solver(grid, dataset, trial, true_gap);
+            return measure_solver(grid, dataset, trial, reference);
         }
         case SolverName::ExamineRandomPairs: {
             auto params = std::get<ExamineRandomPairsParams>(solver.params);
             auto random_pairs
                 = [params](std::vector<PointType> points) { return examine_random_pairs(points, params); };
-            return measure_solver(random_pairs, dataset, trial, true_gap);
+            return measure_solver(random_pairs, dataset, trial, reference);
         }
         case SolverName::ExamineNeighboursAlongEachAxis: {
             auto params                     = std::get<ExamineNeighboursAlongEachAxisParams>(solver.params);
             auto neighbours_along_each_axis = [params](std::vector<PointType> points) {
                 return examine_neighbours_along_each_axis(points, params);
             };
-            return measure_solver(neighbours_along_each_axis, dataset, trial, true_gap);
+            return measure_solver(neighbours_along_each_axis, dataset, trial, reference);
         }
         case SolverName::ExamineNeighboursAlongRandomDirections: {
             auto params = std::get<ExamineNeighboursAlongRandomDirectionsParams>(solver.params);
             auto neighbours_along_random_directions = [params](std::vector<PointType> points) {
                 return examine_neighbours_along_random_directions(points, params);
             };
-            return measure_solver(neighbours_along_random_directions, dataset, trial, true_gap);
+            return measure_solver(neighbours_along_random_directions, dataset, trial, reference);
         }
         case SolverName::ExamineNeighboursAlongZOrderCurve: {
             auto params                         = std::get<ExamineNeighboursAlongZOrderCurveParams>(solver.params);
             auto neighbours_along_z_order_curve = [params](std::vector<PointType> points) {
                 return examine_neighbours_along_z_order_curve(points, params);
             };
-            return measure_solver(neighbours_along_z_order_curve, dataset, trial, true_gap);
+            return measure_solver(neighbours_along_z_order_curve, dataset, trial, reference);
         }
         case SolverName::BestFirstKdTree: {
             auto params     = std::get<BestFirstKdTreeParams>(solver.params);
             auto best_first = [params](std::vector<PointType> points) { return best_first_kd_tree(points, params); };
-            return measure_solver(best_first, dataset, trial, true_gap);
+            return measure_solver(best_first, dataset, trial, reference);
         }
         case SolverName::Sweepline:
-            if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, true_gap);
+            if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, reference);
             break;
         case SolverName::DivideAndConquer:
             if constexpr (dimensions == 2) {
-                return measure_solver(divide_and_conquer, as_points_2d(dataset), trial, true_gap);
+                return measure_solver(divide_and_conquer, as_points_2d(dataset), trial, reference);
             }
             break;
     }
@@ -209,18 +209,19 @@ void run_trials_at(const HarnessSettings &settings, std::vector<TrialResult> &re
 
             if (settings.save_datasets) save_points_to_disk(trial, dataset);
 
-            std::optional<int64_t> true_gap;
-            if (settings.relative_check == RelativeCheck::True) true_gap = true_closest_gap_within(dataset);
+            std::optional<ReferenceDistances> reference;
+            if (settings.relative_check == RelativeCheck::True) reference = reference_distances_within(dataset);
 
             for (auto solver_index : std::views::iota(0uz, settings.solvers.size())) {
-                auto measurement = run_solver(settings.solvers[solver_index], dataset, trial, true_gap);
+                auto measurement = run_solver(settings.solvers[solver_index], dataset, trial, reference);
 
                 results.push_back(
                     {
-                        .solver_index = solver_index,
-                        .trial        = trial,
-                        .runtime      = measurement.runtime,
-                        .ratio        = measurement.ratio,
+                        .solver_index     = solver_index,
+                        .trial            = trial,
+                        .runtime          = measurement.runtime,
+                        .ratio            = measurement.ratio,
+                        .normalised_score = measurement.normalised_score,
                     });
             }
         }
@@ -287,7 +288,14 @@ void print_summary(const HarnessSettings &settings, const std::vector<TrialResul
                     auto ratios = matching_results
                                   | std::views::transform([](const TrialResult &result) { return *result.ratio; })
                                   | std::ranges::to<std::vector>();
-                    summary += std::format(", Mean Ratio: {:.3f}", mean_of(ratios));
+                    auto normalised_scores
+                        = matching_results
+                          | std::views::transform([](const TrialResult &result) { return *result.normalised_score; })
+                          | std::ranges::to<std::vector>();
+                    summary += std::format(
+                        ", Mean Ratio: {:.3f}, Mean Normalised Score: {:.3f}",
+                        mean_of(ratios),
+                        mean_of(normalised_scores));
                 }
 
                 std::println("{}", summary);
@@ -302,21 +310,24 @@ void save_results_to_disk(
     const HarnessSettings &settings, const std::vector<TrialResult> &results, const std::filesystem::path &path) {
     std::ofstream file(path);
 
-    std::println(file, "solver,params,dimensions,point_count,trial_number,runtime_seconds,ratio");
+    std::println(file, "solver,params,dimensions,point_count,trial_number,runtime_seconds,ratio,normalised_score");
 
     for (const auto &result : results) {
-        const auto &solver = settings.solvers[result.solver_index];
-        auto ratio         = result.ratio.transform([](double ratio) { return std::format("{}", ratio); });
+        const auto &solver    = settings.solvers[result.solver_index];
+        auto as_text          = [](double value) { return std::format("{}", value); };
+        auto ratio            = result.ratio.transform(as_text);
+        auto normalised_score = result.normalised_score.transform(as_text);
 
         std::println(
             file,
-            "{},\"{}\",{},{},{},{},{}",
+            "{},\"{}\",{},{},{},{},{},{}",
             solver.name,
             solver.params,
             result.trial.dimensions,
             result.trial.point_count,
             result.trial.trial_number,
             result.runtime.count(),
-            ratio.value_or(""));
+            ratio.value_or(""),
+            normalised_score.value_or(""));
     }
 }
