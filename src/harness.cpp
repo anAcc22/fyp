@@ -1,10 +1,10 @@
 #include "harness.hpp"
 
-#include "approximations.hpp"
 #include "benchmark.hpp"
 #include "brute_force.hpp"
 #include "divide_and_conquer.hpp"
 #include "grid.hpp"
+#include "heuristics.hpp"
 #include "kd_tree.hpp"
 #include "sweepline.hpp"
 
@@ -34,6 +34,8 @@ bool has_matching_params(const SolverSettings &solver) {
     switch (solver.name) {
         case SolverName::ExamineRandomPairs:
             return std::holds_alternative<ExamineRandomPairsParams>(solver.params);
+        case SolverName::ExamineNeighboursAlongEachAxis:
+            return std::holds_alternative<ExamineNeighboursAlongEachAxisParams>(solver.params);
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition:
             return std::holds_alternative<GridDecompositionParams>(solver.params);
@@ -63,6 +65,12 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
     for (const auto &solver : settings.solvers) {
         if (!has_matching_params(solver)) {
             error_messages.push_back(std::format("{} was given the wrong kind of params", solver.name));
+        }
+
+        if (auto *params = std::get_if<ExamineNeighboursAlongEachAxisParams>(&solver.params)) {
+            if (params->window_size < 2) {
+                error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
+            }
         }
 
         for (auto dimensions : settings.dimensions) {
@@ -110,6 +118,13 @@ SolverMeasurement run_solver(
             auto random_pairs
                 = [params](std::vector<PointType> points) { return examine_random_pairs(points, params); };
             return measure_solver(random_pairs, dataset, trial, true_gap);
+        }
+        case SolverName::ExamineNeighboursAlongEachAxis: {
+            auto params                     = std::get<ExamineNeighboursAlongEachAxisParams>(solver.params);
+            auto neighbours_along_each_axis = [params](std::vector<PointType> points) {
+                return examine_neighbours_along_each_axis(points, params);
+            };
+            return measure_solver(neighbours_along_each_axis, dataset, trial, true_gap);
         }
         case SolverName::Sweepline:
             if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, true_gap);

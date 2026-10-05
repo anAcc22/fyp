@@ -1,8 +1,8 @@
 #pragma once
 
-#include "approximations.hpp"
 #include "benchmark.hpp"
 #include "grid.hpp"
+#include "heuristics.hpp"
 
 #include <array>
 #include <cstddef>
@@ -22,6 +22,7 @@ enum class SolverName {
     GridDecomposition,
     ParallelGridDecomposition,
     ExamineRandomPairs,
+    ExamineNeighboursAlongEachAxis,
     Sweepline,
     DivideAndConquer,
 };
@@ -34,6 +35,7 @@ inline constexpr std::array ALL_SOLVER_NAMES{
     SolverName::GridDecomposition,
     SolverName::ParallelGridDecomposition,
     SolverName::ExamineRandomPairs,
+    SolverName::ExamineNeighboursAlongEachAxis,
     SolverName::Sweepline,
     SolverName::DivideAndConquer,
 };
@@ -56,6 +58,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
                 return std::format_to(ctx.out(), "parallel_grid_decomposition");
             case SolverName::ExamineRandomPairs:
                 return std::format_to(ctx.out(), "examine_random_pairs");
+            case SolverName::ExamineNeighboursAlongEachAxis:
+                return std::format_to(ctx.out(), "examine_neighbours_along_each_axis");
             case SolverName::Sweepline:
                 return std::format_to(ctx.out(), "sweepline");
             case SolverName::DivideAndConquer:
@@ -65,7 +69,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
     }
 };
 
-using SolverParams = std::variant<std::monostate, ExamineRandomPairsParams, GridDecompositionParams>;
+using SolverParams = std::variant<
+    std::monostate, ExamineRandomPairsParams, ExamineNeighboursAlongEachAxisParams, GridDecompositionParams>;
 
 template <>
 struct std::formatter<SolverParams> : std::formatter<std::string> {
