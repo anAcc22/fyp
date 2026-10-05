@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-inline constexpr Dimensions MAX_SUPPORTED_DIMENSIONS = 128;
+inline constexpr Dimensions MAX_SUPPORTED_DIMENSIONS = 32;
 
 inline constexpr auto SUPPORTED_DIMENSIONS = [] {
     std::array<Dimensions, MAX_SUPPORTED_DIMENSIONS> dimensions{};

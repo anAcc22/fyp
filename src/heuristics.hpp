@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <format>
 #include <functional>
 #include <numeric>
@@ -121,6 +122,53 @@ ClosestPair<Point<dimensions>> examine_neighbours_along_random_directions(
             for (auto j : std::views::iota(i + 1, std::min(i + params.window_size, n))) {
                 attempt_to_improve(closest_pair, points[order[i]], points[order[j]]);
             }
+        }
+    }
+
+    return closest_pair;
+}
+
+struct ExamineNeighboursAlongZOrderCurveParams {
+    size_t window_size = 2;
+};
+
+template <>
+struct std::formatter<ExamineNeighboursAlongZOrderCurveParams> : std::formatter<std::string> {
+    auto format(const ExamineNeighboursAlongZOrderCurveParams &params, auto &ctx) const {
+        return std::format_to(ctx.out(), "window_size={}", params.window_size);
+    }
+};
+
+inline bool has_lower_most_significant_bit(uint32_t a, uint32_t b) { return a < b && a < (a ^ b); }
+
+template <size_t dimensions>
+bool comes_before_in_z_order(const Point<dimensions> &point_a, const Point<dimensions> &point_b) {
+    size_t deciding_axis        = 0;
+    uint32_t highest_difference = 0;
+
+    for (auto axis : std::views::iota(0uz, dimensions)) {
+        uint32_t difference = static_cast<uint32_t>(point_a[axis]) ^ static_cast<uint32_t>(point_b[axis]);
+
+        if (has_lower_most_significant_bit(highest_difference, difference)) {
+            deciding_axis      = axis;
+            highest_difference = difference;
+        }
+    }
+
+    return point_a[deciding_axis] < point_b[deciding_axis];
+}
+
+template <size_t dimensions>
+ClosestPair<Point<dimensions>> examine_neighbours_along_z_order_curve(
+    std::vector<Point<dimensions>> points, ExamineNeighboursAlongZOrderCurveParams params) {
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point<dimensions>>::init();
+
+    std::ranges::sort(points, comes_before_in_z_order<dimensions>);
+
+    for (auto i : std::views::iota(0uz, n)) {
+        for (auto j : std::views::iota(i + 1, std::min(i + params.window_size, n))) {
+            attempt_to_improve(closest_pair, points[i], points[j]);
         }
     }
 

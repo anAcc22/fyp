@@ -38,6 +38,8 @@ bool has_matching_params(const SolverSettings &solver) {
             return std::holds_alternative<ExamineNeighboursAlongEachAxisParams>(solver.params);
         case SolverName::ExamineNeighboursAlongRandomDirections:
             return std::holds_alternative<ExamineNeighboursAlongRandomDirectionsParams>(solver.params);
+        case SolverName::ExamineNeighboursAlongZOrderCurve:
+            return std::holds_alternative<ExamineNeighboursAlongZOrderCurveParams>(solver.params);
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition:
             return std::holds_alternative<GridDecompositionParams>(solver.params);
@@ -70,6 +72,12 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
         }
 
         if (auto *params = std::get_if<ExamineNeighboursAlongEachAxisParams>(&solver.params)) {
+            if (params->window_size < 2) {
+                error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
+            }
+        }
+
+        if (auto *params = std::get_if<ExamineNeighboursAlongZOrderCurveParams>(&solver.params)) {
             if (params->window_size < 2) {
                 error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
             }
@@ -143,6 +151,13 @@ SolverMeasurement run_solver(
                 return examine_neighbours_along_random_directions(points, params);
             };
             return measure_solver(neighbours_along_random_directions, dataset, trial, true_gap);
+        }
+        case SolverName::ExamineNeighboursAlongZOrderCurve: {
+            auto params                         = std::get<ExamineNeighboursAlongZOrderCurveParams>(solver.params);
+            auto neighbours_along_z_order_curve = [params](std::vector<PointType> points) {
+                return examine_neighbours_along_z_order_curve(points, params);
+            };
+            return measure_solver(neighbours_along_z_order_curve, dataset, trial, true_gap);
         }
         case SolverName::Sweepline:
             if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, true_gap);

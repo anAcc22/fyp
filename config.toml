@@ -26,3 +26,7 @@ window_size = 32
 name            = "examine_neighbours_along_random_directions"
 direction_count = [4, 16]
 window_size     = 32
+
+[[solvers]]
+name        = "examine_neighbours_along_z_order_curve"
+window_size = 32

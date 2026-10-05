@@ -179,6 +179,22 @@ void read_solver(
             }
             return;
         }
+        case SolverName::ExamineNeighboursAlongZOrderCurve: {
+            constexpr std::array<TomlKey, 2> known_keys{ "name", "window_size" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            auto window_sizes = one_or_more_values_at<size_t>(solver_table, "window_size", location, error_messages)
+                                    .value_or(std::vector{ ExamineNeighboursAlongZOrderCurveParams{}.window_size });
+
+            for (auto window_size : window_sizes) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = ExamineNeighboursAlongZOrderCurveParams{ .window_size = window_size },
+                    });
+            }
+            return;
+        }
         case SolverName::ExamineNeighboursAlongRandomDirections: {
             constexpr std::array<TomlKey, 3> known_keys{ "name", "direction_count", "window_size" };
             check_known_keys(solver_table, known_keys, location, error_messages);
