@@ -71,15 +71,24 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
             error_messages.push_back(std::format("{} was given the wrong kind of params", solver.name));
         }
 
+        if (auto *params = std::get_if<ExamineRandomPairsParams>(&solver.params)) {
+            if (params->attempts_per_point < 1) {
+                error_messages.push_back(std::format("{} needs an attempts_per_point of at least 1", solver.name));
+            }
+        }
+
         if (auto *params = std::get_if<ExamineNeighboursAlongEachAxisParams>(&solver.params)) {
-            if (params->window_size < 2) {
-                error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
+            if (params->neighbours_per_point < 1) {
+                error_messages.push_back(std::format("{} needs a neighbours_per_point of at least 1", solver.name));
             }
         }
 
         if (auto *params = std::get_if<ExamineNeighboursAlongZOrderCurveParams>(&solver.params)) {
-            if (params->window_size < 2) {
-                error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
+            if (params->shift_count < 1) {
+                error_messages.push_back(std::format("{} needs a shift_count of at least 1", solver.name));
+            }
+            if (params->neighbours_per_point < 1) {
+                error_messages.push_back(std::format("{} needs a neighbours_per_point of at least 1", solver.name));
             }
         }
 
@@ -87,8 +96,8 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
             if (params->direction_count < 1) {
                 error_messages.push_back(std::format("{} needs a direction_count of at least 1", solver.name));
             }
-            if (params->window_size < 2) {
-                error_messages.push_back(std::format("{} needs a window_size of at least 2", solver.name));
+            if (params->neighbours_per_point < 1) {
+                error_messages.push_back(std::format("{} needs a neighbours_per_point of at least 1", solver.name));
             }
         }
 

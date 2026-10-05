@@ -164,39 +164,49 @@ void read_solver(
             return;
         }
         case SolverName::ExamineNeighboursAlongEachAxis: {
-            constexpr std::array<TomlKey, 2> known_keys{ "name", "window_size" };
+            constexpr std::array<TomlKey, 2> known_keys{ "name", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);
 
-            auto window_sizes = one_or_more_values_at<size_t>(solver_table, "window_size", location, error_messages)
-                                    .value_or(std::vector{ ExamineNeighboursAlongEachAxisParams{}.window_size });
+            auto neighbours_per_point_values
+                = one_or_more_values_at<size_t>(solver_table, "neighbours_per_point", location, error_messages)
+                      .value_or(std::vector{ ExamineNeighboursAlongEachAxisParams{}.neighbours_per_point });
 
-            for (auto window_size : window_sizes) {
+            for (auto neighbours_per_point : neighbours_per_point_values) {
                 solvers.push_back(
                     {
                         .name   = *name,
-                        .params = ExamineNeighboursAlongEachAxisParams{ .window_size = window_size },
+                        .params = ExamineNeighboursAlongEachAxisParams{ .neighbours_per_point = neighbours_per_point },
                     });
             }
             return;
         }
         case SolverName::ExamineNeighboursAlongZOrderCurve: {
-            constexpr std::array<TomlKey, 2> known_keys{ "name", "window_size" };
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "shift_count", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);
 
-            auto window_sizes = one_or_more_values_at<size_t>(solver_table, "window_size", location, error_messages)
-                                    .value_or(std::vector{ ExamineNeighboursAlongZOrderCurveParams{}.window_size });
+            ExamineNeighboursAlongZOrderCurveParams defaults;
 
-            for (auto window_size : window_sizes) {
+            auto shift_counts = one_or_more_values_at<size_t>(solver_table, "shift_count", location, error_messages)
+                                    .value_or(std::vector{ defaults.shift_count });
+            auto neighbours_per_point_values
+                = one_or_more_values_at<size_t>(solver_table, "neighbours_per_point", location, error_messages)
+                      .value_or(std::vector{ defaults.neighbours_per_point });
+
+            for (auto [shift_count, neighbours_per_point] :
+                 std::views::cartesian_product(shift_counts, neighbours_per_point_values)) {
                 solvers.push_back(
                     {
                         .name   = *name,
-                        .params = ExamineNeighboursAlongZOrderCurveParams{ .window_size = window_size },
+                        .params = ExamineNeighboursAlongZOrderCurveParams{
+                            .shift_count = shift_count,
+                            .neighbours_per_point = neighbours_per_point,
+                        },
                     });
             }
             return;
         }
         case SolverName::ExamineNeighboursAlongRandomDirections: {
-            constexpr std::array<TomlKey, 3> known_keys{ "name", "direction_count", "window_size" };
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "direction_count", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);
 
             ExamineNeighboursAlongRandomDirectionsParams defaults;
@@ -204,16 +214,18 @@ void read_solver(
             auto direction_counts
                 = one_or_more_values_at<size_t>(solver_table, "direction_count", location, error_messages)
                       .value_or(std::vector{ defaults.direction_count });
-            auto window_sizes = one_or_more_values_at<size_t>(solver_table, "window_size", location, error_messages)
-                                    .value_or(std::vector{ defaults.window_size });
+            auto neighbours_per_point_values
+                = one_or_more_values_at<size_t>(solver_table, "neighbours_per_point", location, error_messages)
+                      .value_or(std::vector{ defaults.neighbours_per_point });
 
-            for (auto [direction_count, window_size] : std::views::cartesian_product(direction_counts, window_sizes)) {
+            for (auto [direction_count, neighbours_per_point] :
+                 std::views::cartesian_product(direction_counts, neighbours_per_point_values)) {
                 solvers.push_back(
                     {
                         .name   = *name,
                         .params = ExamineNeighboursAlongRandomDirectionsParams{
                             .direction_count = direction_count,
-                            .window_size     = window_size,
+                            .neighbours_per_point     = neighbours_per_point,
                         },
                     });
             }

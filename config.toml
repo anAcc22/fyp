@@ -1,4 +1,4 @@
-dimensions     = [8]
+dimensions     = [16]
 point_counts   = [2000, 4000, 6000, 8000]
 trial_count    = 5
 relative_check = true
@@ -16,17 +16,18 @@ relative_check = true
 
 [[solvers]]
 name               = "examine_random_pairs"
-attempts_per_point = 1
+attempts_per_point = 512
 
 [[solvers]]
-name        = "examine_neighbours_along_each_axis"
-window_size = 32
+name                 = "examine_neighbours_along_each_axis"
+neighbours_per_point = 32
 
 [[solvers]]
-name            = "examine_neighbours_along_random_directions"
-direction_count = [4, 16]
-window_size     = 32
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = [4, 16]
+neighbours_per_point = 32
 
 [[solvers]]
-name        = "examine_neighbours_along_z_order_curve"
-window_size = 32
+name                 = "examine_neighbours_along_z_order_curve"
+shift_count          = [4, 16]
+neighbours_per_point = 32
