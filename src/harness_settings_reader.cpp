@@ -179,6 +179,30 @@ void read_solver(
             }
             return;
         }
+        case SolverName::ExamineNeighboursAlongRandomDirections: {
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "direction_count", "window_size" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            ExamineNeighboursAlongRandomDirectionsParams defaults;
+
+            auto direction_counts
+                = one_or_more_values_at<size_t>(solver_table, "direction_count", location, error_messages)
+                      .value_or(std::vector{ defaults.direction_count });
+            auto window_sizes = one_or_more_values_at<size_t>(solver_table, "window_size", location, error_messages)
+                                    .value_or(std::vector{ defaults.window_size });
+
+            for (auto [direction_count, window_size] : std::views::cartesian_product(direction_counts, window_sizes)) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = ExamineNeighboursAlongRandomDirectionsParams{
+                            .direction_count = direction_count,
+                            .window_size     = window_size,
+                        },
+                    });
+            }
+            return;
+        }
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition: {
             constexpr std::array<TomlKey, 3> known_keys{ "name", "width_strategy", "width_multiplier" };

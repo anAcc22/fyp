@@ -1,4 +1,4 @@
-dimensions     = [6]
+dimensions     = [8]
 point_counts   = [2000, 4000, 6000, 8000]
 trial_count    = 5
 relative_check = true
@@ -20,4 +20,9 @@ attempts_per_point = 1
 
 [[solvers]]
 name        = "examine_neighbours_along_each_axis"
-window_size = [2, 8, 32]
+window_size = 32
+
+[[solvers]]
+name            = "examine_neighbours_along_random_directions"
+direction_count = [4, 16]
+window_size     = 32

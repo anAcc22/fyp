@@ -4,8 +4,11 @@
 #include "geometry.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <format>
+#include <functional>
+#include <numeric>
 #include <string>
 #include <random>
 #include <ranges>
@@ -67,6 +70,56 @@ examine_neighbours_along_each_axis(std::vector<Point<dimensions>> points, Examin
         for (auto i : std::views::iota(0uz, n)) {
             for (auto j : std::views::iota(i + 1, std::min(i + params.window_size, n))) {
                 attempt_to_improve(closest_pair, points[i], points[j]);
+            }
+        }
+    }
+
+    return closest_pair;
+}
+
+struct ExamineNeighboursAlongRandomDirectionsParams {
+    size_t direction_count = 1;
+    size_t window_size     = 2;
+};
+
+template <>
+struct std::formatter<ExamineNeighboursAlongRandomDirectionsParams> : std::formatter<std::string> {
+    auto format(const ExamineNeighboursAlongRandomDirectionsParams &params, auto &ctx) const {
+        return std::format_to(
+            ctx.out(), "direction_count={}, window_size={}", params.direction_count, params.window_size);
+    }
+};
+
+template <size_t dimensions>
+double projection_of(const Point<dimensions> &point, const std::array<double, dimensions> &direction) {
+    return std::ranges::fold_left(
+        std::views::zip_transform(std::multiplies{}, direction, point.vector), 0.0, std::plus{});
+}
+
+template <size_t dimensions>
+ClosestPair<Point<dimensions>> examine_neighbours_along_random_directions(
+    std::vector<Point<dimensions>> points, ExamineNeighboursAlongRandomDirectionsParams params) {
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point<dimensions>>::init();
+
+    std::normal_distribution<double> component_distribution;
+
+    std::vector<double> projections(n);
+    std::vector<size_t> order(n);
+    std::iota(begin(order), end(order), 0uz);
+
+    for (auto _ : std::views::iota(0uz, params.direction_count)) {
+        std::array<double, dimensions> direction;
+        for (auto &component : direction) component = component_distribution(solver_randomiser);
+
+        std::ranges::transform(
+            points, begin(projections), [&](const auto &point) { return projection_of(point, direction); });
+
+        std::ranges::sort(order, {}, [&](size_t index) { return projections[index]; });
+
+        for (auto i : std::views::iota(0uz, n)) {
+            for (auto j : std::views::iota(i + 1, std::min(i + params.window_size, n))) {
+                attempt_to_improve(closest_pair, points[order[i]], points[order[j]]);
             }
         }
     }
