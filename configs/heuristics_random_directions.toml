@@ -1,0 +1,504 @@
+dimensions     = [6]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 2
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 4
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 6
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 8
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 10
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 12
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 14
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 16
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 18
+neighbours_per_point = 20
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 2
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 4
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 6
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 8
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 10
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 12
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 14
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 16
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 18
+
+[[solvers]]
+name                 = "examine_neighbours_along_random_directions"
+direction_count      = 20
+neighbours_per_point = 20

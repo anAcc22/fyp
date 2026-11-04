@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Redraws every figure in the paper. Run from anywhere: ./plots.sh
+#
+# Each figure has matching names: configs/<name>.toml -> data/<name>.csv -> paper/diagrams/<name>.pdf
+#
+# data/ is gitignored, so get a missing CSV back by running its config. main only reads config.toml from
+# its working directory and writes data/runtimes.csv there, so use a scratch folder to leave the root
+# config.toml alone:
+#     mkdir -p /tmp/run/data && cp configs/<name>.toml /tmp/run/config.toml
+#     (cd /tmp/run && "$OLDPWD/main") && cp /tmp/run/data/runtimes.csv data/<name>.csv
+#
+# Reruns give the same ratios and scores, as seeds are fixed. Runtimes will differ. The configs with very
+# high dimensions take a while, because the score measures all pairs exactly.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+python=.venv/bin/python
+
+# Chapter 4: Heuristics
+
+# Fig 4.1: random pairs at d = 6. Every trial's ratio as a dot, with the mean and its 95% confidence interval.
+$python plot.py \
+    --data data/heuristics_random_pairs.csv \
+    --x attempts_per_point --y ratio \
+    --x-label 'Budget ($a$)' --y-label 'Ratio' --y-min 1 \
+    --form swarm --theme heuristics \
+    --out paper/diagrams/heuristics_random_pairs.pdf
+
+# Fig 4.2: random directions at d = 6. Mean ratio for each m and w. A cell marked 1 was exact in every trial,
+# and the yellow outline surrounds budgets of at most 60, the most that Fig 4.1 goes up to.
+$python plot.py \
+    --data data/heuristics_random_directions.csv \
+    --x neighbours_per_point --row direction_count --y ratio \
+    --x-label 'Neighbours per point ($w$)' --y-label 'Directions ($m$)' \
+    --mark-value 1 --outline-product 60 \
+    --form heatmap --theme heuristics \
+    --out paper/diagrams/heuristics_random_directions.pdf
+
+# Fig 4.3: the Z-order curve on a 4 x 4 grid. A diagram with no config or data, drawn by its own script.
+$python plot_z_order.py --out paper/diagrams/heuristics_z_order.pdf
+
+# Fig 4.4: the Z-order curve at d = 6. The same layout as Fig 4.2, with s orders in place of m directions.
+$python plot.py \
+    --data data/heuristics_z_order_heatmap.csv \
+    --x neighbours_per_point --row shift_count --y ratio \
+    --x-label 'Neighbours per point ($w$)' --y-label 'Orders ($s$)' \
+    --mark-value 1 --outline-product 60 \
+    --form heatmap --theme heuristics \
+    --out paper/diagrams/heuristics_z_order_heatmap.pdf
+
+# Fig 4.5: best-first search at d = 6. Laid out like Fig 4.1, and a yellow ring marks a bound where every trial was exact.
+$python plot.py \
+    --data data/heuristics_best_first.csv \
+    --x comparisons_per_point --y ratio \
+    --x-label 'Bound ($b$)' --y-label 'Ratio' --y-min 1 --mark-value 1 \
+    --form swarm --theme heuristics \
+    --out paper/diagrams/heuristics_best_first.pdf
+
+# Fig 4.6: random pairs as d grows, from d = 4 to 256. Each bar joins the mean ratios at a = 6 and a = 60, showing
+# that high dimensions make the ratio look near perfect. d = 2 is left out, as its ratio of 34 flattens everything else.
+$python plot.py \
+    --data data/heuristics_high_dimensions.csv \
+    --x dimensions --ends attempts_per_point --ends-label a --y ratio \
+    --x-label 'Dimensions ($d$)' --y-label 'Ratio' --y-min 1 \
+    --form dumbbell --theme heuristics \
+    --out paper/diagrams/heuristics_high_dimensions.pdf
+
+# Fig 4.7: the chapter's final figure. Mean normalised score of four heuristics at a budget of 128 as d grows, from
+# d = 4 to 2048, with soft 95% confidence bands. They converge at the far right. Along each axis is deliberately left out.
+$python plot.py \
+    --data data/heuristics_comparison.csv \
+    --x dimensions --y normalised_score \
+    --x-label 'Dimensions ($d$)' --y-label 'Normalised score' --y-min 0.84 --y-step 0.04 \
+    --form lines --theme heuristics \
+    --out paper/diagrams/heuristics_comparison.pdf

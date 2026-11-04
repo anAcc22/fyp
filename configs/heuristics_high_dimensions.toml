@@ -1,0 +1,8 @@
+dimensions     = [4, 6, 8, 12, 16, 24, 32, 64, 128, 256]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = [6, 60]

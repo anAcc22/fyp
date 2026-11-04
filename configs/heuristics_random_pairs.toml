@@ -1,0 +1,44 @@
+dimensions     = [6]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 6
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 12
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 18
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 24
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 30
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 36
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 42
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 48
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 54
+
+[[solvers]]
+name               = "examine_random_pairs"
+attempts_per_point = 60

@@ -15,7 +15,7 @@
 
 inline constexpr Dimensions MAX_CONSECUTIVE_DIMENSIONS = 32;
 
-inline constexpr auto LARGE_DIMENSIONS = std::to_array<Dimensions>({ 64, 128, 256 });
+inline constexpr auto LARGE_DIMENSIONS = std::to_array<Dimensions>({ 64, 128, 256, 512, 1024, 2048 });
 
 inline constexpr auto SUPPORTED_DIMENSIONS = [] {
     std::array<Dimensions, MAX_CONSECUTIVE_DIMENSIONS + LARGE_DIMENSIONS.size()> dimensions{};

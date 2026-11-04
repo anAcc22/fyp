@@ -1,0 +1,9 @@
+dimensions     = [6]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name                 = "examine_neighbours_along_z_order_curve"
+shift_count          = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+neighbours_per_point = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]

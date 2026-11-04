@@ -1,0 +1,8 @@
+dimensions     = [6]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name                  = "best_first_kd_tree"
+comparisons_per_point = [6, 12, 18, 24, 30, 36, 42, 48, 54, 60]

@@ -5,6 +5,9 @@
 !*.tex
 !*.bib
 !main.pdf
+!/paper/diagrams/*.pdf
+!/fonts/*.ttf
+!/fonts/OFL.txt
 !*.hpp
 !Makefile
 !.gitignore
@@ -12,3 +15,4 @@
 !*/
 !*.py
 !*.toml
+!/plots.sh
