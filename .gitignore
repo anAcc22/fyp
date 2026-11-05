@@ -8,6 +8,7 @@
 !/paper/diagrams/*.pdf
 !/fonts/*.ttf
 !/fonts/OFL.txt
+!/fonts/LatinModernMono-NOTICE.txt
 !*.hpp
 !Makefile
 !.gitignore

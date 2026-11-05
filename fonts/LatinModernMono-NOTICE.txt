@@ -1,0 +1,4 @@
+LatinModernMonoLight10-Bold.ttf is Latin Modern Mono Light 10 Bold from the GUST e-foundry, with its outlines converted
+from OpenType to TrueType so that matplotlib can embed it. It is the same typewriter design as the code command in the
+paper, but heavier, as the regular weight looks thin in figures. It is under the GUST Font License:
+https://www.gust.org.pl/projects/e-foundry/licenses

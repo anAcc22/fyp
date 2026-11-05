@@ -17,6 +17,11 @@ cd "$(dirname "$0")"
 
 python=.venv/bin/python
 
+# Chapter 2: Methodology
+
+# Fig 2.1: how one benchmark runs, from config.toml to a figure. A diagram with no config or data, drawn by its own script.
+$python plot_benchmark_pipeline.py --out paper/diagrams/methodology_benchmark_pipeline.pdf
+
 # Chapter 3: Low Dimensions
 
 # Fig 3.1: the exact algorithms at d = 2 as n grows from 10,000 to 100,000. Plain runtime on plain axes: grid decomposition

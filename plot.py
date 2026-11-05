@@ -26,6 +26,17 @@ import seaborn as sns
 
 # Each chapter has its own key colour.
 THEMES = {
+    "methodology": {
+        "key_colour": "#4A4A4A",
+        "value_band_colour": "#EEEDE8",
+        "label_colour": "#F5E3B8",
+        "data_edge_colour": "#D9603B",
+        "data_fill_colour": "#FCEFE8",
+        "solver_edge_colour": "#7E9C54",
+        "solver_fill_colour": "#F2F6EA",
+        "timed_edge_colour": "#4A6128",
+        "timed_fill_colour": "#DDEB8E",
+    },
     "heuristics": {
         "key_colour": "#7E9C54",
         "deep_colour": "#4A6128",

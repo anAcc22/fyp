@@ -87,8 +87,37 @@ structures, assuming you need one (e.g., grid decomposition). As long as meaning
 done to contribute to the solution, we feel that it should add to the measured runtime. Finally, fixed seeds
 are used to generate the datasets, ensuring replicable results.
 
-\begin{aside}
-    Well, I haven't quite decided on a good sample size at the moment...
+Figure~\ref{fig:methodology_benchmark_pipeline} illustrates the benchmark pipeline in full detail. Everything
+begins with a TOML file. Instead of handwriting loops and conditional statements in \code{main.cpp}, we
+abstract this process away through the \code{config.toml} file. You only need to specify information like
+the algorithms of interest, the sizes of the dataset, dimensions, trial counts, and other auxiliary information.
+Compile just once, and tweak \code{config.toml} from there on. For consistency, unless specified otherwise,
+we always run thirty trials (i.e., samples) throughout all experiments in this paper. This helps even out
+the effects of a super lucky or unlucky run. The settings are checked before anything runs, and any problems produce
+explicit errors, so you can fix issues right away instead of discovering something broke an hour
+into a run.
 
-    We'll revisit this section another time.
-\end{aside}
+There are two kinds of seeds: a dataset seed that decides the points, and a solver seed that controls a
+solver's random choices (think randomised algorithms). Each of these seeds is created from a base seed ($42$),
+mixed with $n$, $d$, $t$ (trial number), and a label. We always make sure to reset the solver seed so
+the order in which the algorithms are specified does not matter.
+
+Only the lime section is measured; things like creating the dataset or copying the points should not count
+towards an algorithm's performance. After all iterations are completed, the results are written back to disk.
+A run that fails halfway (which is very unlikely to happen anyway) or stops early loses all progress, but in
+a sense the all-or-nothing, atomic behaviour also has its charm.
+
+Because of the nature of the benchmark, ratios and normalised scores repeat \textit{exactly} between
+runs. Sadly, runtimes do not enjoy this repeatability, because they depend on the machine, and even
+on the same machine, the presence of other processes can interfere with the effectiveness of techniques
+like multithreading.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=\figurescale]{diagrams/methodology_benchmark_pipeline.pdf}
+    \caption{How one benchmark runs. The seeds (in yellow) all originate from one base seed, so every
+        solver in a trial gets the same points and the same starting randomness, regardless of the
+        order that solvers run in. Dashed boxes only happen if the config asks for them.
+    }
+    \label{fig:methodology_benchmark_pipeline}
+\end{figure}
