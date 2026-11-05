@@ -6,6 +6,7 @@
 !*.bib
 !main.pdf
 !/paper/diagrams/*.pdf
+!/paper/ntu-fyp-report.cls
 !/fonts/*.ttf
 !/fonts/OFL.txt
 !/fonts/LatinModernMono-NOTICE.txt

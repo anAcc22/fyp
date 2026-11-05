@@ -1,12 +1,10 @@
-\documentclass[a4paper,11pt]{report}
+% the school's class loads a font package that announces its own patches; they're harmless
+\RequirePackage{silence}
+\WarningsOff[nfssext-cfr]
 
-\usepackage[margin=1in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage{amsmath}
-\usepackage{amssymb}
+\documentclass{ntu-fyp-report}
+
 \usepackage{xfrac}
-\usepackage{graphicx}
 \newcommand{\figurescale}{0.85} % every figure is included at this size, so they all look consistent
 \usepackage[breakable]{tcolorbox}
 
@@ -25,20 +23,38 @@
   before upper={\setlength{\parskip}{0.6em}},
 }
 
-\title{Pushing the Quadratic Boundary when Computing a Closest Pair}
 \author{Author}
+\title{Pushing the Quadratic Boundary when Computing a Closest Pair}
+
+\supervisor{}
+\examiner{}
+
+\project{CCDS\,00-0000}
+\school{College of Computing and Data Science}
+\schoolyear{2026}
 
 \begin{document}
 
+\pagenumbering{roman}
+
 \maketitle
+
+\input{abstract}
+\input{acknowledgements}
+
 \tableofcontents
+\listoffigures
+
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
 
 \input{chapter_01}
 \input{chapter_02}
 \input{chapter_03}
 \input{chapter_04}
 
-\bibliographystyle{plain}
+\bibliographystyle{plainurl}
 \bibliography{references}
 
 \end{document}
