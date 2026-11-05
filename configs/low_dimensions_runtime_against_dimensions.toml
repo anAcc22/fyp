@@ -1,0 +1,16 @@
+dimensions     = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = false
+
+[[solvers]]
+name = "examine_all_pairs"
+
+[[solvers]]
+name = "examine_all_pairs_in_parallel"
+
+[[solvers]]
+name = "kd_tree"
+
+[[solvers]]
+name = "parallel_kd_tree"

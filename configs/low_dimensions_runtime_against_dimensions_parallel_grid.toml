@@ -1,0 +1,8 @@
+# Stops at d = 10, as parallel grid decomposition takes over 30 seconds per trial at d = 11.
+dimensions     = [2, 4, 6, 8, 10]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = false
+
+[[solvers]]
+name = "parallel_grid_decomposition"

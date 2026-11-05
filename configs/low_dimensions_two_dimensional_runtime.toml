@@ -1,0 +1,16 @@
+dimensions     = [2]
+point_counts   = [10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000]
+trial_count    = 30
+relative_check = false
+
+[[solvers]]
+name = "divide_and_conquer"
+
+[[solvers]]
+name = "sweepline"
+
+[[solvers]]
+name = "grid_decomposition"
+
+[[solvers]]
+name = "parallel_grid_decomposition"

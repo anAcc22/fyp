@@ -17,6 +17,31 @@ cd "$(dirname "$0")"
 
 python=.venv/bin/python
 
+# Chapter 3: Low Dimensions
+
+# Fig 3.1: the exact algorithms at d = 2 as n grows from 10,000 to 100,000. Plain runtime on plain axes: grid decomposition
+# has the best theory, yet curves away as the slowest. Parallel grid's timings drift between runs, so run all four together.
+$python plot.py \
+    --data data/low_dimensions_two_dimensional_runtime.csv \
+    --x point_count --y runtime_seconds \
+    --x-label 'Number of points ($n$)' --y-label 'Runtime (s)' --y-min 0 --y-step 0.02 \
+    --linear-x --form lines --theme low_dimensions \
+    --out paper/diagrams/low_dimensions_two_dimensional_runtime.pdf
+
+# Fig 3.2: runtime against d at n = 10,000, on a log y-axis. The k-d tree climbs and levels off about 3 times above brute
+# force, while grid decomposition blows straight past it. The harness runs every solver at every d, so this CSV joins three
+# configs (low_dimensions_runtime_against_dimensions, plus its _grid and _parallel_grid versions), as grid stops early.
+# The orange-yellow highlight traces the fastest algorithm at each d. The dotted lines are not data: they continue grid
+# decomposition at 3 times per extra dimension, as each square has 3^d neighbours.
+$python plot.py \
+    --data data/low_dimensions_runtime_against_dimensions.csv \
+    --x dimensions --y runtime_seconds \
+    --x-label 'Dimensions ($d$)' --y-label 'Runtime (s)' \
+    --linear-x --label-first-x --log-y --y-max 100 --trace-fastest \
+    --project grid_decomposition parallel_grid_decomposition --projection-growth 3 \
+    --form lines --theme low_dimensions \
+    --out paper/diagrams/low_dimensions_runtime_against_dimensions.pdf
+
 # Chapter 4: Heuristics
 
 # Fig 4.1: random pairs at d = 6. Every trial's ratio as a dot, with the mean and its 95% confidence interval.

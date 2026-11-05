@@ -104,6 +104,21 @@ cache-friendly.
     iterating over \code{std::unordered_map}).
 \end{aside}
 
+Figure~\ref{fig:low_dimensions_two_dimensional_runtime} compares the runtime of the algorithms
+introduced thus far. Alas, a stronger theoretical time complexity does not always translate into
+smaller runtimes. Grid decomposition, and even its parallel variant, fail to beat divide-and-conquer
+and sweepline at basically every $n$. In fact, the larger the number of points, the more overhead is
+required to maintain the closed-addressing hash table, and the abundant cache misses end up tanking
+performance. Sweepline performs a touch better than divide-and-conquer likely due to no recursion tax.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=\figurescale]{diagrams/low_dimensions_two_dimensional_runtime.pdf}
+    \caption{Mean runtime of the exact algorithms at $d = 2$. Shaded bands show the 95\% confidence interval of each mean.
+    }
+    \label{fig:low_dimensions_two_dimensional_runtime}
+\end{figure}
+
 \section{Beyond Two Dimensions}
 
 While the two-dimensional algorithms have proven encouraging, both theoretically and empirically,
@@ -222,6 +237,16 @@ and the contribution of each dimension towards the overall distance is tinier. E
 we end up needing to search both subtrees. Fortunately, it just degrades to the brute force,
 unlike general grid decomposition that mandates searching all neighbouring hypercubes.
 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=\figurescale]{diagrams/low_dimensions_runtime_against_dimensions.pdf}
+    \caption{Mean runtime at $n = 10{,}000$ as $d$ grows, on a log scale. Grid decomposition stops
+        at $d = 8$ and its parallel variant at $d = 10$, as each trial beyond that takes too long.
+        The orange highlight traces the fastest algorithm at each $d$.
+    }
+    \label{fig:low_dimensions_runtime_against_dimensions}
+\end{figure}
+
 \begin{aside}
     Given how promising the $k$-dimensional tree is, it'd be sweet if we could somehow
     parallelise it. Between the build and query phases, the latter seems more straightforward
@@ -242,3 +267,13 @@ unlike general grid decomposition that mandates searching all neighbouring hyper
     now enjoy extra pruning through the shared global best distance, it comes without
     paying the full price of synchronisation overheads.
 \end{aside}
+
+Figure~\ref{fig:low_dimensions_runtime_against_dimensions} pits the various solvers against
+each other. Burdened by the curse of dimensionality, grid decomposition is quickly overtaken
+by the brute force at small $d$, and parallelising it only buys us so much time. Looking
+at the orange highlight, the parallel $k$-dimensional tree is our best bet for $d \leq 16$.
+Beyond that, pruning starts to break down, as closeness along one axis does not imply
+general proximity, and we end up traversing almost the entire tree instead. Thus, you end
+up paying for recursion that offers little benefit, and a simple parallel brute force
+is, as anticlimactic as it sounds, the winner.
+

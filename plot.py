@@ -21,7 +21,7 @@ from matplotlib import font_manager
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.patches import Rectangle
-from matplotlib.ticker import MultipleLocator, NullLocator, ScalarFormatter
+from matplotlib.ticker import FuncFormatter, LogLocator, MultipleLocator, NullLocator, ScalarFormatter
 import seaborn as sns
 
 # Each chapter has its own key colour.
@@ -32,17 +32,49 @@ THEMES = {
         "label_colour": "#E6C384",
         "value_band_colour": "#D5DFC2",
         "outline_colour": "#E6C384",
+        "line_colours": {
+            "examine_neighbours_along_z_order_curve": "#4A6128",
+            "best_first_kd_tree": "#7FA23C",
+            "examine_neighbours_along_random_directions": "#B5C242",
+            "examine_random_pairs": "#DDA93C",
+        },
+    },
+    "low_dimensions": {
+        "key_colour": "#E0652B",
+        "deep_colour": "#9C3D12",
+        "label_colour": "#E6C384",
+        "value_band_colour": "#F8D3B5",
+        "outline_colour": "#E6C384",
+        "fastest_path_colour": "#F9D08E",
+        "line_colours": {
+            "grid_decomposition": "#9C3D12",
+            "kd_tree": "#B3202E",
+            "examine_all_pairs": "#4A3A36",
+            "parallel_grid_decomposition": "#E0652B",
+            "parallel_kd_tree": "#EE8080",
+            "examine_all_pairs_in_parallel": "#A8958C",
+            "divide_and_conquer": "#F08F3E",
+            "sweepline": "#F6B56F",
+        },
     },
 }
 
 INK_COLOUR = "#333333"
 
-# Each line on a comparison plot: (name, colour, marker). The chapter's green shading towards lime and yellow.
+# Each line on a comparison plot: (name, marker). Each theme picks the colours.
 SOLVER_LINES = {
-    "examine_neighbours_along_z_order_curve": ("Z-order curve", "#4A6128", "o"),
-    "best_first_kd_tree": ("Best-first search", "#7FA23C", "s"),
-    "examine_neighbours_along_random_directions": ("Random directions", "#B5C242", "^"),
-    "examine_random_pairs": ("Random pairs", "#DDA93C", "v"),
+    "examine_neighbours_along_z_order_curve": ("Z-order curve", "o"),
+    "best_first_kd_tree": ("Best-first search", "s"),
+    "examine_neighbours_along_random_directions": ("Random directions", "^"),
+    "examine_random_pairs": ("Random pairs", "v"),
+    "grid_decomposition": ("Grid decomposition", "o"),
+    "parallel_grid_decomposition": ("Parallel grid decomposition", "D"),
+    "divide_and_conquer": ("Divide-and-conquer", "s"),
+    "sweepline": ("Sweepline", "^"),
+    "kd_tree": ("$k$-d tree", "s"),
+    "parallel_kd_tree": ("Parallel $k$-d tree", "^"),
+    "examine_all_pairs": ("Brute force", "v"),
+    "examine_all_pairs_in_parallel": ("Parallel brute force", "p"),
 }
 
 # Literata at medium weight, kept in the repo so that figures come out the same on any machine.
@@ -70,8 +102,11 @@ MEAN_BAND_AREA_IN_POINTS = 140
 DUMBBELL_MARKER_AREA_IN_POINTS = 64
 DOUBLING_X_AXIS_ROOM = 1.25
 LINE_MARKER_SIZE_IN_POINTS = 6
+FASTEST_PATH_WIDTH_IN_POINTS = 8
 CONFIDENCE_BAND_ALPHA = 0.2
 CONFIDENCE_BAND_CAP_WIDTH_IN_DOUBLINGS = 0.38
+CONFIDENCE_BAND_CAP_WIDTH_ON_LINEAR_X = 0.02
+LINEAR_X_AXIS_ROOM = 0.04
 CONFIDENCE_BAND_CAP_STEPS = 24
 CONFIDENCE_LEVEL = 95
 
@@ -85,6 +120,13 @@ def read_arguments():
     parser.add_argument("--y-label", required=True, help="may contain LaTeX")
     parser.add_argument("--y-min", type=float, help="where the y-axis starts, if not left to the data")
     parser.add_argument("--y-step", type=float, help="gap between y-axis ticks, if not left to the data")
+    parser.add_argument("--label-first-x", action="store_true", help="for lines with --linear-x: also label the first value")
+    parser.add_argument("--trace-fastest", action="store_true", help="for lines: trace a highlight along the lowest mean at each x")
+    parser.add_argument("--project", nargs="+", default=[], help="for lines with --log-y: solvers to extend with a dotted line up to the top of the y-axis")
+    parser.add_argument("--projection-growth", type=float, help="how many times y multiplies each time x goes up by one")
+    parser.add_argument("--y-max", type=float, help="for lines with --log-y: the top of the y-axis")
+    parser.add_argument("--log-y", action="store_true", help="for lines: use a log y-axis, labelled at powers of ten")
+    parser.add_argument("--linear-x", action="store_true", help="for lines: use an evenly spaced x-axis, labelled at every other value")
     parser.add_argument("--form", required=True, choices=("swarm", "violin", "heatmap", "dumbbell", "lines"), help="how to show the trials")
     parser.add_argument("--row", help="for a heatmap: CSV column or solver param for the rows")
     parser.add_argument("--mark-value", type=float, help="put a double border on heatmap cells with this value, or on means whose trials all have it")
@@ -108,7 +150,9 @@ def read_results(path):
         lambda text: dict(pair.split("=") for pair in text.split(", ") if pair)
     )
     params = pd.DataFrame(params.tolist(), index=results.index).apply(as_numbers_if_possible)
-    return results.drop(columns="params").join(params)
+    results = results.drop(columns="params").join(params)
+    results["nanoseconds_per_point"] = results["runtime_seconds"] / results["point_count"] * 1e9
+    return results
 
 
 def fail_if_mixing_settings(results, plotted_columns):
@@ -337,7 +381,7 @@ def use_doubling_x_axis(ax, x_values):
     ax.set_xticks(x_values)
 
 
-def round_off_right_end_of_band(band):
+def round_off_right_end_of_band(band, linear_x):
     """A band otherwise ends in a hard vertical edge, as if chopped off. The cap adds no data: it only softens that edge."""
     vertices = band.get_paths()[0].vertices
     last_x = vertices[:, 0].max()
@@ -347,20 +391,41 @@ def round_off_right_end_of_band(band):
     half_height = (vertices[end_b, 1] - vertices[end_a, 1]) / 2
     angles = np.linspace(-np.pi / 2, np.pi / 2, CONFIDENCE_BAND_CAP_STEPS)
 
+    if linear_x:
+        cap_x_values = last_x * (1 + CONFIDENCE_BAND_CAP_WIDTH_ON_LINEAR_X * np.cos(angles))
+    else:
+        cap_x_values = last_x * 2 ** (CONFIDENCE_BAND_CAP_WIDTH_IN_DOUBLINGS * np.cos(angles))
+
     cap = np.column_stack((
-        last_x * 2 ** (CONFIDENCE_BAND_CAP_WIDTH_IN_DOUBLINGS * np.cos(angles)),
+        cap_x_values,
         middle + half_height * np.sin(angles),
     ))
 
     band.set_verts([np.vstack((vertices[: end_a + 1], cap, vertices[end_b:]))])
 
 
-def draw_solver_lines(ax, results, x, y):
-    """One line of means per solver, each in a soft confidence band. x doubles along the axis."""
-    solvers = [solver for solver in SOLVER_LINES if solver in set(results["solver"])]
+def use_linear_x_axis(ax, x_values, label_first_x):
+    room = (x_values[-1] - x_values[0]) * LINEAR_X_AXIS_ROOM
+    ax.set_xlim(x_values[0] - room, x_values[-1] + room)
+    ax.set_xticks([x_values[0], *x_values[1::2]] if label_first_x else x_values[1::2])
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
+
+
+def use_powers_of_ten_y_axis(ax, values, y_max):
+    ax.set_yscale("log", base=10)
+    ax.set_ylim(10 ** math.floor(math.log10(values.min())), y_max or 10 ** math.ceil(math.log10(values.max())))
+    ax.yaxis.set_major_locator(LogLocator(base=10, numticks=20))
+    ax.yaxis.set_minor_locator(NullLocator())
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+
+
+def draw_solver_lines(ax, results, x, y, line_colours, linear_x, label_first_x):
+    """One line of means per solver, each in a soft confidence band. x doubles along the axis, unless it is linear."""
+    solvers = [solver for solver in line_colours if solver in set(results["solver"])]
 
     for solver in solvers:
-        name, colour, marker = SOLVER_LINES[solver]
+        name, marker = SOLVER_LINES[solver]
+        colour = line_colours[solver]
 
         sns.lineplot(
             data=results[results["solver"] == solver],
@@ -380,12 +445,49 @@ def draw_solver_lines(ax, results, x, y):
             label=name,
             ax=ax,
         )
-        round_off_right_end_of_band(ax.collections[-1])
+        round_off_right_end_of_band(ax.collections[-1], linear_x)
 
-    use_doubling_x_axis(ax, np.sort(results[x].unique()))
+    x_values = np.sort(results[x].unique())
+
+    if linear_x:
+        use_linear_x_axis(ax, x_values, label_first_x)
+    else:
+        use_doubling_x_axis(ax, x_values)
+
     ax.legend(frameon=False, loc="lower right", bbox_to_anchor=(1, 1.02), ncols=2)
 
     return results.groupby([x, "solver"])[y].mean().to_numpy()
+
+
+def draw_projections(ax, results, x, y, solvers, growth, line_colours):
+    """Dotted lines continuing from each solver's last mean. They are not data, so the caption has to say so."""
+    top = ax.get_ylim()[1]
+
+    for solver in solvers:
+        means = results[results["solver"] == solver].groupby(x)[y].mean()
+        last_x, last_y = means.index[-1], means.iloc[-1]
+        ax.plot(
+            [last_x, last_x + math.log(top / last_y, growth)],
+            [last_y, top],
+            color=line_colours[solver],
+            linestyle=":",
+            linewidth=1.8,
+            zorder=1,
+        )
+
+
+def trace_fastest_path(ax, results, x, y, colour):
+    fastest = results.groupby([x, "solver"])[y].mean().groupby(x).min()
+    ax.plot(
+        fastest.index,
+        fastest.to_numpy(),
+        color=colour,
+        linewidth=FASTEST_PATH_WIDTH_IN_POINTS,
+        solid_capstyle="round",
+        solid_joinstyle="round",
+        clip_on=False,
+        zorder=1,
+    )
 
 
 def draw_dumbbells(ax, results, x, y, ends, ends_label, theme):
@@ -458,13 +560,29 @@ def main():
             ax, results, arguments.x, arguments.row, arguments.y, theme, arguments.mark_value, arguments.outline_product
         )
     elif arguments.form == "lines":
-        means = draw_solver_lines(ax, results, arguments.x, arguments.y)
+        means = draw_solver_lines(
+            ax, results, arguments.x, arguments.y, theme["line_colours"], arguments.linear_x, arguments.label_first_x
+        )
+
+        if arguments.trace_fastest:
+            trace_fastest_path(ax, results, arguments.x, arguments.y, theme["fastest_path_colour"])
 
         if arguments.y_step is not None:
             ax.yaxis.set_major_locator(MultipleLocator(arguments.y_step))
 
-        keep_trials_within_y_axis(ax, pd.Series(means).dropna(), arguments.y_min)
+        if arguments.log_y:
+            use_powers_of_ten_y_axis(ax, results[arguments.y], arguments.y_max)
+            draw_projections(
+                ax, results, arguments.x, arguments.y, arguments.project, arguments.projection_growth, theme["line_colours"]
+            )
+        else:
+            keep_trials_within_y_axis(ax, pd.Series(means).dropna(), arguments.y_min)
+
         sns.despine(fig=fig, offset=10, trim=True)
+
+        # Trimming stops at the first tick, but the data starts before it.
+        if arguments.linear_x:
+            ax.spines["bottom"].set_bounds(results[arguments.x].min(), results[arguments.x].max())
     elif arguments.form == "dumbbell":
         means = draw_dumbbells(ax, results, arguments.x, arguments.y, arguments.ends, arguments.ends_label, theme)
         keep_trials_within_y_axis(ax, pd.Series(means), arguments.y_min)
