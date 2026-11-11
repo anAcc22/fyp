@@ -26,6 +26,7 @@ enum class SolverName {
     ExamineNeighboursAlongRandomDirections,
     ExamineNeighboursAlongZOrderCurve,
     BestFirstKdTree,
+    ExamineNeighboursAlongChanShiftedZOrderCurves,
     Sweepline,
     DivideAndConquer,
 };
@@ -42,6 +43,7 @@ inline constexpr std::array ALL_SOLVER_NAMES{
     SolverName::ExamineNeighboursAlongRandomDirections,
     SolverName::ExamineNeighboursAlongZOrderCurve,
     SolverName::BestFirstKdTree,
+    SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves,
     SolverName::Sweepline,
     SolverName::DivideAndConquer,
 };
@@ -72,6 +74,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
                 return std::format_to(ctx.out(), "examine_neighbours_along_z_order_curve");
             case SolverName::BestFirstKdTree:
                 return std::format_to(ctx.out(), "best_first_kd_tree");
+            case SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves:
+                return std::format_to(ctx.out(), "examine_neighbours_along_chan_shifted_z_order_curves");
             case SolverName::Sweepline:
                 return std::format_to(ctx.out(), "sweepline");
             case SolverName::DivideAndConquer:

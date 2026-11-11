@@ -1,37 +1,7 @@
-dimensions     = [64]
-point_counts   = [2000, 4000, 6000, 8000]
+dimensions     = [6]
+point_counts   = [10000]
 trial_count    = 5
 relative_check = true
 
-# [[solvers]]
-# name = "examine_all_pairs_in_parallel"
-#
-# [[solvers]]
-# name             = "parallel_grid_decomposition"
-# width_strategy   = "uniform_random_nearest_neighbor"
-# width_multiplier = 2.0
-#
-# [[solvers]]
-# name = "parallel_kd_tree"
-
 [[solvers]]
-name               = "examine_random_pairs"
-attempts_per_point = 128
-
-# [[solvers]]
-# name                 = "examine_neighbours_along_each_axis"
-# neighbours_per_point = 32
-
-[[solvers]]
-name                 = "examine_neighbours_along_random_directions"
-direction_count      = 4
-neighbours_per_point = 32
-
-[[solvers]]
-name                 = "examine_neighbours_along_z_order_curve"
-shift_count          = 4
-neighbours_per_point = 32
-
-[[solvers]]
-name                  = "best_first_kd_tree"
-comparisons_per_point = 128
+name = "examine_neighbours_along_chan_shifted_z_order_curves"

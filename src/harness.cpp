@@ -1,5 +1,6 @@
 #include "harness.hpp"
 
+#include "approximations.hpp"
 #include "benchmark.hpp"
 #include "brute_force.hpp"
 #include "divide_and_conquer.hpp"
@@ -181,6 +182,9 @@ SolverMeasurement run_solver(
             auto best_first = [params](std::vector<PointType> points) { return best_first_kd_tree(points, params); };
             return measure_solver(best_first, dataset, trial, reference);
         }
+        case SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves:
+            return measure_solver(
+                examine_neighbours_along_chan_shifted_z_order_curves<dimensions>, dataset, trial, reference);
         case SolverName::Sweepline:
             if constexpr (dimensions == 2) return measure_solver(sweepline, as_points_2d(dataset), trial, reference);
             break;
