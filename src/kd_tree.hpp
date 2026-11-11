@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <numeric>
 #include <ranges>
 #include <vector>
@@ -105,6 +106,75 @@ ClosestPair<Point<dimensions>> parallel_kd_tree(std::vector<Point<dimensions>> p
     for (auto i : std::views::iota(0uz, THREAD_COUNT)) {
         const auto &thread_best = best_of_thread[i];
         if (thread_best.gap < closest_pair.gap) closest_pair = thread_best;
+    }
+
+    return closest_pair;
+}
+
+struct KdTreeRegion {
+    int64_t lower_bound;
+    size_t l, r, depth;
+};
+
+template <size_t dimensions>
+ClosestPair<Point<dimensions>>
+best_first_kd_tree_search(std::vector<Point<dimensions>> points, size_t comparisons_per_point, double epsilon) {
+    auto n            = points.size();
+    auto closest_pair = ClosestPair<Point<dimensions>>::init();
+
+    build_kd_tree(points, 0uz, n, 0uz);
+
+    auto further_away = [](const KdTreeRegion &region_a, const KdTreeRegion &region_b) {
+        return region_a.lower_bound > region_b.lower_bound;
+    };
+
+    auto squared_slack = (1 + epsilon) * (1 + epsilon);
+
+    auto cannot_improve_enough = [&](int64_t lower_bound) {
+        return lower_bound >= closest_pair.gap
+               || (epsilon > 0
+                   && static_cast<double>(lower_bound) * squared_slack >= static_cast<double>(closest_pair.gap));
+    };
+
+    std::vector<KdTreeRegion> regions_to_visit;
+
+    for (auto query_index : std::views::iota(0uz, n)) {
+        auto query       = points[query_index];
+        auto comparisons = 0uz;
+
+        regions_to_visit.clear();
+        regions_to_visit.push_back({ .lower_bound = 0, .l = 0, .r = n, .depth = 0 });
+
+        while (!regions_to_visit.empty() && comparisons < comparisons_per_point) {
+            std::ranges::pop_heap(regions_to_visit, further_away);
+            auto region = regions_to_visit.back();
+            regions_to_visit.pop_back();
+
+            if (cannot_improve_enough(region.lower_bound)) break;
+
+            auto axis = region.depth % dimensions;
+            auto m    = std::midpoint(region.l, region.r);
+
+            if (m != query_index) {
+                attempt_to_improve(closest_pair, query, points[m]);
+                comparisons++;
+            }
+
+            int64_t gap_to_plane = int64_t{ query[axis] } - points[m][axis];
+
+            KdTreeRegion lower_side{ region.lower_bound, region.l, m, region.depth + 1 };
+            KdTreeRegion upper_side{ region.lower_bound, m + 1, region.r, region.depth + 1 };
+
+            auto &far_side       = gap_to_plane > 0 ? lower_side : upper_side;
+            far_side.lower_bound = std::max(region.lower_bound, gap_to_plane * gap_to_plane);
+
+            for (const auto &side : { lower_side, upper_side }) {
+                if (side.l < side.r && !cannot_improve_enough(side.lower_bound)) {
+                    regions_to_visit.push_back(side);
+                    std::ranges::push_heap(regions_to_visit, further_away);
+                }
+            }
+        }
     }
 
     return closest_pair;

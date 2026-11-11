@@ -197,6 +197,22 @@ void read_solver(
             }
             return;
         }
+        case SolverName::ApproximateBestFirstKdTree: {
+            constexpr std::array<TomlKey, 2> known_keys{ "name", "epsilon" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            auto epsilons = one_or_more_values_at<double>(solver_table, "epsilon", location, error_messages)
+                                .value_or(std::vector{ ApproximateBestFirstKdTreeParams{}.epsilon });
+
+            for (auto epsilon : epsilons) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = ApproximateBestFirstKdTreeParams{ .epsilon = epsilon },
+                    });
+            }
+            return;
+        }
         case SolverName::ExamineNeighboursAlongZOrderCurve: {
             constexpr std::array<TomlKey, 3> known_keys{ "name", "shift_count", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);

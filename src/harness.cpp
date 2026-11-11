@@ -43,6 +43,8 @@ bool has_matching_params(const SolverSettings &solver) {
             return std::holds_alternative<ExamineNeighboursAlongZOrderCurveParams>(solver.params);
         case SolverName::BestFirstKdTree:
             return std::holds_alternative<BestFirstKdTreeParams>(solver.params);
+        case SolverName::ApproximateBestFirstKdTree:
+            return std::holds_alternative<ApproximateBestFirstKdTreeParams>(solver.params);
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition:
             return std::holds_alternative<GridDecompositionParams>(solver.params);
@@ -77,6 +79,12 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
         if (auto *params = std::get_if<BestFirstKdTreeParams>(&solver.params)) {
             if (params->comparisons_per_point < 1) {
                 error_messages.push_back(std::format("{} needs a comparisons_per_point of at least 1", solver.name));
+            }
+        }
+
+        if (auto *params = std::get_if<ApproximateBestFirstKdTreeParams>(&solver.params)) {
+            if (!(params->epsilon >= 0)) {
+                error_messages.push_back(std::format("{} needs an epsilon of at least 0", solver.name));
             }
         }
 
@@ -180,6 +188,13 @@ SolverMeasurement run_solver(
         case SolverName::BestFirstKdTree: {
             auto params     = std::get<BestFirstKdTreeParams>(solver.params);
             auto best_first = [params](std::vector<PointType> points) { return best_first_kd_tree(points, params); };
+            return measure_solver(best_first, dataset, trial, reference);
+        }
+        case SolverName::ApproximateBestFirstKdTree: {
+            auto params     = std::get<ApproximateBestFirstKdTreeParams>(solver.params);
+            auto best_first = [params](std::vector<PointType> points) {
+                return approximate_best_first_kd_tree(points, params);
+            };
             return measure_solver(best_first, dataset, trial, reference);
         }
         case SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves:

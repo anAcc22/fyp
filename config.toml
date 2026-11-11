@@ -1,7 +1,11 @@
-dimensions     = [6]
+dimensions     = [6, 64]
 point_counts   = [10000]
-trial_count    = 5
+trial_count    = 1
 relative_check = true
 
 [[solvers]]
-name = "examine_neighbours_along_chan_shifted_z_order_curves"
+name = "kd_tree"
+
+[[solvers]]
+name    = "approximate_best_first_kd_tree"
+epsilon = [4, 64, 128, 1024]

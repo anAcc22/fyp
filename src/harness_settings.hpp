@@ -1,5 +1,6 @@
 #pragma once
 
+#include "approximations.hpp"
 #include "benchmark.hpp"
 #include "grid.hpp"
 #include "heuristics.hpp"
@@ -27,6 +28,7 @@ enum class SolverName {
     ExamineNeighboursAlongZOrderCurve,
     BestFirstKdTree,
     ExamineNeighboursAlongChanShiftedZOrderCurves,
+    ApproximateBestFirstKdTree,
     Sweepline,
     DivideAndConquer,
 };
@@ -44,6 +46,7 @@ inline constexpr std::array ALL_SOLVER_NAMES{
     SolverName::ExamineNeighboursAlongZOrderCurve,
     SolverName::BestFirstKdTree,
     SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves,
+    SolverName::ApproximateBestFirstKdTree,
     SolverName::Sweepline,
     SolverName::DivideAndConquer,
 };
@@ -76,6 +79,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
                 return std::format_to(ctx.out(), "best_first_kd_tree");
             case SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves:
                 return std::format_to(ctx.out(), "examine_neighbours_along_chan_shifted_z_order_curves");
+            case SolverName::ApproximateBestFirstKdTree:
+                return std::format_to(ctx.out(), "approximate_best_first_kd_tree");
             case SolverName::Sweepline:
                 return std::format_to(ctx.out(), "sweepline");
             case SolverName::DivideAndConquer:
@@ -88,7 +93,7 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
 using SolverParams = std::variant<
     std::monostate, ExamineRandomPairsParams, ExamineNeighboursAlongEachAxisParams,
     ExamineNeighboursAlongRandomDirectionsParams, ExamineNeighboursAlongZOrderCurveParams, BestFirstKdTreeParams,
-    GridDecompositionParams>;
+    GridDecompositionParams, ApproximateBestFirstKdTreeParams>;
 
 template <>
 struct std::formatter<SolverParams> : std::formatter<std::string> {
