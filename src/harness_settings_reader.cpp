@@ -213,6 +213,57 @@ void read_solver(
             }
             return;
         }
+        case SolverName::LocalitySensitiveHashing: {
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "hashes_per_table", "table_count" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            LocalitySensitiveHashingParams defaults;
+
+            auto hashes_per_table_values
+                = one_or_more_values_at<size_t>(solver_table, "hashes_per_table", location, error_messages)
+                      .value_or(std::vector{ defaults.hashes_per_table });
+            auto table_counts = one_or_more_values_at<size_t>(solver_table, "table_count", location, error_messages)
+                                    .value_or(std::vector{ defaults.table_count });
+
+            for (auto [hashes_per_table, table_count] :
+                 std::views::cartesian_product(hashes_per_table_values, table_counts)) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = LocalitySensitiveHashingParams{
+                            .hashes_per_table = hashes_per_table,
+                            .table_count      = table_count,
+                        },
+                    });
+            }
+            return;
+        }
+        case SolverName::ApproximateLocalitySensitiveHashing: {
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "approximation_factor", "attempts_per_distance" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            ApproximateLocalitySensitiveHashingParams defaults;
+
+            auto approximation_factors
+                = one_or_more_values_at<double>(solver_table, "approximation_factor", location, error_messages)
+                      .value_or(std::vector{ defaults.approximation_factor });
+            auto attempts_per_distance_values
+                = one_or_more_values_at<size_t>(solver_table, "attempts_per_distance", location, error_messages)
+                      .value_or(std::vector{ defaults.attempts_per_distance });
+
+            for (auto [approximation_factor, attempts_per_distance] :
+                 std::views::cartesian_product(approximation_factors, attempts_per_distance_values)) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = ApproximateLocalitySensitiveHashingParams{
+                            .approximation_factor  = approximation_factor,
+                            .attempts_per_distance = attempts_per_distance,
+                        },
+                    });
+            }
+            return;
+        }
         case SolverName::ExamineNeighboursAlongZOrderCurve: {
             constexpr std::array<TomlKey, 3> known_keys{ "name", "shift_count", "neighbours_per_point" };
             check_known_keys(solver_table, known_keys, location, error_messages);

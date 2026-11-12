@@ -45,6 +45,10 @@ bool has_matching_params(const SolverSettings &solver) {
             return std::holds_alternative<BestFirstKdTreeParams>(solver.params);
         case SolverName::ApproximateBestFirstKdTree:
             return std::holds_alternative<ApproximateBestFirstKdTreeParams>(solver.params);
+        case SolverName::LocalitySensitiveHashing:
+            return std::holds_alternative<LocalitySensitiveHashingParams>(solver.params);
+        case SolverName::ApproximateLocalitySensitiveHashing:
+            return std::holds_alternative<ApproximateLocalitySensitiveHashingParams>(solver.params);
         case SolverName::GridDecomposition:
         case SolverName::ParallelGridDecomposition:
             return std::holds_alternative<GridDecompositionParams>(solver.params);
@@ -85,6 +89,24 @@ std::vector<ErrorMessage> error_messages_for(const HarnessSettings &settings) {
         if (auto *params = std::get_if<ApproximateBestFirstKdTreeParams>(&solver.params)) {
             if (!(params->epsilon >= 0)) {
                 error_messages.push_back(std::format("{} needs an epsilon of at least 0", solver.name));
+            }
+        }
+
+        if (auto *params = std::get_if<LocalitySensitiveHashingParams>(&solver.params)) {
+            if (params->hashes_per_table < 1) {
+                error_messages.push_back(std::format("{} needs a hashes_per_table of at least 1", solver.name));
+            }
+            if (params->table_count < 1) {
+                error_messages.push_back(std::format("{} needs a table_count of at least 1", solver.name));
+            }
+        }
+
+        if (auto *params = std::get_if<ApproximateLocalitySensitiveHashingParams>(&solver.params)) {
+            if (!(params->approximation_factor > 1)) {
+                error_messages.push_back(std::format("{} needs an approximation_factor above 1", solver.name));
+            }
+            if (params->attempts_per_distance < 1) {
+                error_messages.push_back(std::format("{} needs an attempts_per_distance of at least 1", solver.name));
             }
         }
 
@@ -196,6 +218,20 @@ SolverMeasurement run_solver(
                 return approximate_best_first_kd_tree(points, params);
             };
             return measure_solver(best_first, dataset, trial, reference);
+        }
+        case SolverName::LocalitySensitiveHashing: {
+            auto params  = std::get<LocalitySensitiveHashingParams>(solver.params);
+            auto hashing = [params](std::vector<PointType> points) {
+                return locality_sensitive_hashing(points, params);
+            };
+            return measure_solver(hashing, dataset, trial, reference);
+        }
+        case SolverName::ApproximateLocalitySensitiveHashing: {
+            auto params  = std::get<ApproximateLocalitySensitiveHashingParams>(solver.params);
+            auto hashing = [params](std::vector<PointType> points) {
+                return approximate_locality_sensitive_hashing(points, params);
+            };
+            return measure_solver(hashing, dataset, trial, reference);
         }
         case SolverName::ExamineNeighboursAlongChanShiftedZOrderCurves:
             return measure_solver(

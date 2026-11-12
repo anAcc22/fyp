@@ -1,11 +1,8 @@
-dimensions     = [6, 64]
+dimensions     = [6, 18]
 point_counts   = [10000]
-trial_count    = 1
+trial_count    = 3
 relative_check = true
 
 [[solvers]]
-name = "kd_tree"
-
-[[solvers]]
-name    = "approximate_best_first_kd_tree"
-epsilon = [4, 64, 128, 1024]
+name                 = "approximate_locality_sensitive_hashing"
+approximation_factor = [2, 4]
