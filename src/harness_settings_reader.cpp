@@ -239,26 +239,46 @@ void read_solver(
             return;
         }
         case SolverName::ApproximateLocalitySensitiveHashing: {
-            constexpr std::array<TomlKey, 3> known_keys{ "name", "approximation_factor", "attempts_per_distance" };
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "epsilon", "confidence" };
             check_known_keys(solver_table, known_keys, location, error_messages);
 
             ApproximateLocalitySensitiveHashingParams defaults;
 
-            auto approximation_factors
-                = one_or_more_values_at<double>(solver_table, "approximation_factor", location, error_messages)
-                      .value_or(std::vector{ defaults.approximation_factor });
-            auto attempts_per_distance_values
-                = one_or_more_values_at<size_t>(solver_table, "attempts_per_distance", location, error_messages)
-                      .value_or(std::vector{ defaults.attempts_per_distance });
+            auto epsilons = one_or_more_values_at<double>(solver_table, "epsilon", location, error_messages)
+                                .value_or(std::vector{ defaults.epsilon });
+            auto confidences = one_or_more_values_at<double>(solver_table, "confidence", location, error_messages)
+                                   .value_or(std::vector{ defaults.confidence });
 
-            for (auto [approximation_factor, attempts_per_distance] :
-                 std::views::cartesian_product(approximation_factors, attempts_per_distance_values)) {
+            for (auto [epsilon, confidence] : std::views::cartesian_product(epsilons, confidences)) {
                 solvers.push_back(
                     {
                         .name   = *name,
                         .params = ApproximateLocalitySensitiveHashingParams{
-                            .approximation_factor  = approximation_factor,
-                            .attempts_per_distance = attempts_per_distance,
+                            .epsilon    = epsilon,
+                            .confidence = confidence,
+                        },
+                    });
+            }
+            return;
+        }
+        case SolverName::ProjectedBestFirstKdTree: {
+            constexpr std::array<TomlKey, 3> known_keys{ "name", "epsilon", "confidence" };
+            check_known_keys(solver_table, known_keys, location, error_messages);
+
+            ProjectedBestFirstKdTreeParams defaults;
+
+            auto epsilons = one_or_more_values_at<double>(solver_table, "epsilon", location, error_messages)
+                                .value_or(std::vector{ defaults.epsilon });
+            auto confidences = one_or_more_values_at<double>(solver_table, "confidence", location, error_messages)
+                                   .value_or(std::vector{ defaults.confidence });
+
+            for (auto [epsilon, confidence] : std::views::cartesian_product(epsilons, confidences)) {
+                solvers.push_back(
+                    {
+                        .name   = *name,
+                        .params = ProjectedBestFirstKdTreeParams{
+                            .epsilon    = epsilon,
+                            .confidence = confidence,
                         },
                     });
             }

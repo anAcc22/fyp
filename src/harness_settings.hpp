@@ -31,6 +31,7 @@ enum class SolverName {
     ApproximateBestFirstKdTree,
     LocalitySensitiveHashing,
     ApproximateLocalitySensitiveHashing,
+    ProjectedBestFirstKdTree,
     Sweepline,
     DivideAndConquer,
 };
@@ -51,6 +52,7 @@ inline constexpr std::array ALL_SOLVER_NAMES{
     SolverName::ApproximateBestFirstKdTree,
     SolverName::LocalitySensitiveHashing,
     SolverName::ApproximateLocalitySensitiveHashing,
+    SolverName::ProjectedBestFirstKdTree,
     SolverName::Sweepline,
     SolverName::DivideAndConquer,
 };
@@ -89,6 +91,8 @@ struct std::formatter<SolverName> : std::formatter<std::string> {
                 return std::format_to(ctx.out(), "locality_sensitive_hashing");
             case SolverName::ApproximateLocalitySensitiveHashing:
                 return std::format_to(ctx.out(), "approximate_locality_sensitive_hashing");
+            case SolverName::ProjectedBestFirstKdTree:
+                return std::format_to(ctx.out(), "projected_best_first_kd_tree");
             case SolverName::Sweepline:
                 return std::format_to(ctx.out(), "sweepline");
             case SolverName::DivideAndConquer:
@@ -102,7 +106,7 @@ using SolverParams = std::variant<
     std::monostate, ExamineRandomPairsParams, ExamineNeighboursAlongEachAxisParams,
     ExamineNeighboursAlongRandomDirectionsParams, ExamineNeighboursAlongZOrderCurveParams, BestFirstKdTreeParams,
     GridDecompositionParams, ApproximateBestFirstKdTreeParams, LocalitySensitiveHashingParams,
-    ApproximateLocalitySensitiveHashingParams>;
+    ApproximateLocalitySensitiveHashingParams, ProjectedBestFirstKdTreeParams>;
 
 template <>
 struct std::formatter<SolverParams> : std::formatter<std::string> {

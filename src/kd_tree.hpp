@@ -7,15 +7,17 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <numeric>
 #include <ranges>
+#include <type_traits>
 #include <vector>
 
-template <size_t dimensions>
-void build_kd_tree(std::vector<Point<dimensions>> &points, size_t l, size_t r, size_t depth) {
+template <typename TreePoint>
+void build_kd_tree(std::vector<TreePoint> &points, size_t l, size_t r, size_t depth) {
     if (!(l < r)) return;
 
-    auto axis = depth % dimensions;
+    auto axis = depth % TreePoint::dimension_count;
     auto m    = std::midpoint(l, r);
 
     std::nth_element(begin(points) + l, begin(points) + m, begin(points) + r, [axis](const auto &a, const auto &b) {
@@ -111,32 +113,38 @@ ClosestPair<Point<dimensions>> parallel_kd_tree(std::vector<Point<dimensions>> p
     return closest_pair;
 }
 
+template <typename SquaredGap>
 struct KdTreeRegion {
-    int64_t lower_bound;
+    SquaredGap lower_bound;
     size_t l, r, depth;
 };
 
-template <size_t dimensions>
-ClosestPair<Point<dimensions>>
-best_first_kd_tree_search(std::vector<Point<dimensions>> points, size_t comparisons_per_point, double epsilon) {
+template <typename TreePoint, typename OriginalOf = std::identity>
+auto best_first_kd_tree_search(
+    std::vector<TreePoint> points, size_t comparisons_per_point, double epsilon, OriginalOf original_of = {}) {
+    using PointType  = std::remove_cvref_t<std::invoke_result_t<OriginalOf, const TreePoint &>>;
+    using Coordinate = std::remove_cvref_t<decltype(points[0][0])>;
+    using SquaredGap = std::conditional_t<std::is_integral_v<Coordinate>, int64_t, double>;
+    using Region     = KdTreeRegion<SquaredGap>;
+
     auto n            = points.size();
-    auto closest_pair = ClosestPair<Point<dimensions>>::init();
+    auto closest_pair = ClosestPair<PointType>::init();
 
     build_kd_tree(points, 0uz, n, 0uz);
 
-    auto further_away = [](const KdTreeRegion &region_a, const KdTreeRegion &region_b) {
+    auto further_away = [](const Region &region_a, const Region &region_b) {
         return region_a.lower_bound > region_b.lower_bound;
     };
 
     auto squared_slack = (1 + epsilon) * (1 + epsilon);
 
-    auto cannot_improve_enough = [&](int64_t lower_bound) {
+    auto cannot_improve_enough = [&](SquaredGap lower_bound) {
         return lower_bound >= closest_pair.gap
                || (epsilon > 0
                    && static_cast<double>(lower_bound) * squared_slack >= static_cast<double>(closest_pair.gap));
     };
 
-    std::vector<KdTreeRegion> regions_to_visit;
+    std::vector<Region> regions_to_visit;
 
     for (auto query_index : std::views::iota(0uz, n)) {
         auto query       = points[query_index];
@@ -152,18 +160,18 @@ best_first_kd_tree_search(std::vector<Point<dimensions>> points, size_t comparis
 
             if (cannot_improve_enough(region.lower_bound)) break;
 
-            auto axis = region.depth % dimensions;
+            auto axis = region.depth % TreePoint::dimension_count;
             auto m    = std::midpoint(region.l, region.r);
 
             if (m != query_index) {
-                attempt_to_improve(closest_pair, query, points[m]);
+                attempt_to_improve(closest_pair, original_of(query), original_of(points[m]));
                 comparisons++;
             }
 
-            int64_t gap_to_plane = int64_t{ query[axis] } - points[m][axis];
+            SquaredGap gap_to_plane = SquaredGap{ query[axis] } - points[m][axis];
 
-            KdTreeRegion lower_side{ region.lower_bound, region.l, m, region.depth + 1 };
-            KdTreeRegion upper_side{ region.lower_bound, m + 1, region.r, region.depth + 1 };
+            Region lower_side{ region.lower_bound, region.l, m, region.depth + 1 };
+            Region upper_side{ region.lower_bound, m + 1, region.r, region.depth + 1 };
 
             auto &far_side       = gap_to_plane > 0 ? lower_side : upper_side;
             far_side.lower_bound = std::max(region.lower_bound, gap_to_plane * gap_to_plane);

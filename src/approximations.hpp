@@ -77,6 +77,7 @@ inline constexpr ExamineNeighboursAlongZOrderCurveParams LOCALITY_SENSITIVE_HASH
 };
 
 inline constexpr double BUCKET_WIDTH_PER_TARGET_DISTANCE = 4.0;
+inline constexpr size_t CANDIDATE_ALLOWANCE_PER_TABLE    = 3;
 
 template <size_t dimensions>
 void for_each_shared_bucket(
@@ -146,8 +147,8 @@ locality_sensitive_hashing(std::vector<Point<dimensions>> points, LocalitySensit
 }
 
 struct ApproximateLocalitySensitiveHashingParams {
-    double approximation_factor  = 2.0;
-    size_t attempts_per_distance = 1;
+    double epsilon    = 1.0;
+    double confidence = 0.9;
 };
 
 template <>
@@ -155,9 +156,9 @@ struct std::formatter<ApproximateLocalitySensitiveHashingParams> : std::formatte
     auto format(const ApproximateLocalitySensitiveHashingParams &params, auto &ctx) const {
         return std::format_to(
             ctx.out(),
-            "approximation_factor={}, attempts_per_distance={}",
-            params.approximation_factor,
-            params.attempts_per_distance);
+            "epsilon={}, confidence={}",
+            params.epsilon,
+            params.confidence);
     }
 };
 
@@ -172,20 +173,27 @@ struct LocalitySensitiveHashingTables {
     size_t hashes_per_table;
     size_t table_count;
     size_t candidates_per_point;
+    double success_chance_per_attempt;
 };
 
 inline LocalitySensitiveHashingTables tables_for(size_t point_count, double approximation_factor) {
     auto near_collision_chance = p_stable_collision_chance(BUCKET_WIDTH_PER_TARGET_DISTANCE);
     auto far_collision_chance  = p_stable_collision_chance(BUCKET_WIDTH_PER_TARGET_DISTANCE / approximation_factor);
 
-    auto log_point_count = std::log(static_cast<double>(point_count));
-    auto exponent        = std::log(1 / near_collision_chance) / std::log(1 / far_collision_chance);
-    auto table_count     = static_cast<size_t>(std::ceil(std::exp(exponent * log_point_count)));
+    auto log_point_count  = std::log(static_cast<double>(point_count));
+    auto exponent         = std::log(1 / near_collision_chance) / std::log(1 / far_collision_chance);
+    auto table_count      = static_cast<size_t>(std::ceil(std::exp(exponent * log_point_count)));
+    auto hashes_per_table = static_cast<size_t>(std::ceil(log_point_count / std::log(1 / far_collision_chance)));
+
+    auto chance_near_pair_never_collides = std::pow(
+        1 - std::pow(near_collision_chance, static_cast<double>(hashes_per_table)), static_cast<double>(table_count));
+    auto chance_too_many_far_candidates = 1.0 / CANDIDATE_ALLOWANCE_PER_TABLE;
 
     return {
-        .hashes_per_table     = static_cast<size_t>(std::ceil(log_point_count / std::log(1 / far_collision_chance))),
-        .table_count          = table_count,
-        .candidates_per_point = 3 * table_count,
+        .hashes_per_table           = hashes_per_table,
+        .table_count                = table_count,
+        .candidates_per_point       = CANDIDATE_ALLOWANCE_PER_TABLE * table_count,
+        .success_chance_per_attempt = 1 - chance_near_pair_never_collides - chance_too_many_far_candidates,
     };
 }
 
@@ -195,12 +203,13 @@ ClosestPair<Point<dimensions>> approximate_locality_sensitive_hashing(
     auto n            = points.size();
     auto closest_pair = examine_neighbours_along_z_order_curve(points, LOCALITY_SENSITIVE_HASHING_SEED_PARAMS);
 
-    auto factor_per_distance = std::sqrt(params.approximation_factor);
+    auto factor_per_distance = std::sqrt(1 + params.epsilon);
     auto tables              = tables_for(n, factor_per_distance);
 
     std::normal_distribution<double> component_distribution;
     std::vector<size_t> candidates_checked(n);
     std::vector<bool> query_finished(n);
+    auto failure_allowance = 1 - params.confidence;
 
     for (auto target_distance = std::sqrt(static_cast<double>(closest_pair.gap)) / factor_per_distance;
          closest_pair.gap > 0;
@@ -208,7 +217,11 @@ ClosestPair<Point<dimensions>> approximate_locality_sensitive_hashing(
         auto reach              = factor_per_distance * target_distance;
         auto found_within_reach = false;
 
-        for (auto _ : std::views::iota(0uz, params.attempts_per_distance)) {
+        failure_allowance /= 2;
+        auto attempts = static_cast<size_t>(
+            std::ceil(std::log(failure_allowance) / std::log(1 - tables.success_chance_per_attempt)));
+
+        for (auto _ : std::views::iota(0uz, attempts)) {
             std::ranges::fill(candidates_checked, 0uz);
             std::ranges::fill(query_finished, false);
 
@@ -242,4 +255,82 @@ ClosestPair<Point<dimensions>> approximate_locality_sensitive_hashing(
     }
 
     return closest_pair;
+}
+
+inline constexpr size_t PROJECTED_DIMENSIONS = 6;
+
+template <size_t degrees_of_freedom>
+    requires(degrees_of_freedom % 2 == 0)
+double chi_squared_chance_below(double x) {
+    auto half  = x / 2;
+    auto term  = 1.0;
+    auto total = 0.0;
+    for (auto i : std::views::iota(0uz, degrees_of_freedom / 2)) {
+        total += term;
+        term *= half / static_cast<double>(i + 1);
+    }
+    return 1 - std::exp(-half) * total;
+}
+
+template <size_t degrees_of_freedom>
+double chi_squared_quantile(double chance) {
+    auto low  = 0.0;
+    auto high = 1.0;
+    while (chi_squared_chance_below<degrees_of_freedom>(high) < chance) {
+        low = high;
+        high *= 2;
+    }
+    for (auto _ : std::views::iota(0, 100)) {
+        auto middle = std::midpoint(low, high);
+        (chi_squared_chance_below<degrees_of_freedom>(middle) < chance ? low : high) = middle;
+    }
+    return high;
+}
+
+struct ProjectedBestFirstKdTreeParams {
+    double epsilon    = 0.1;
+    double confidence = 0.9;
+};
+
+template <>
+struct std::formatter<ProjectedBestFirstKdTreeParams> : std::formatter<std::string> {
+    auto format(const ProjectedBestFirstKdTreeParams &params, auto &ctx) const {
+        return std::format_to(ctx.out(), "epsilon={}, confidence={}", params.epsilon, params.confidence);
+    }
+};
+
+template <size_t dimensions>
+struct ProjectedPoint {
+    static constexpr size_t dimension_count = PROJECTED_DIMENSIONS;
+    std::array<double, PROJECTED_DIMENSIONS> vector;
+    Point<dimensions> original;
+    constexpr auto &operator[](this auto &self, size_t index) { return self.vector[index]; }
+};
+
+template <size_t dimensions>
+ClosestPair<Point<dimensions>>
+projected_best_first_kd_tree(std::vector<Point<dimensions>> points, ProjectedBestFirstKdTreeParams params) {
+    auto spread = 1 / std::sqrt(chi_squared_quantile<PROJECTED_DIMENSIONS>(params.confidence));
+    std::normal_distribution<double> component_distribution(0.0, spread);
+
+    std::array<std::array<double, dimensions>, PROJECTED_DIMENSIONS> directions;
+    for (auto &direction : directions) {
+        for (auto &component : direction) component = component_distribution(solver_randomiser);
+    }
+
+    auto project = [&](const Point<dimensions> &point) {
+        ProjectedPoint<dimensions> projected_point{ .vector = {}, .original = point };
+        std::ranges::transform(directions, begin(projected_point.vector), [&](const auto &direction) {
+            return projection_of(point, direction);
+        });
+        return projected_point;
+    };
+
+    auto projected_points = points | std::views::transform(project) | std::ranges::to<std::vector>();
+
+    return best_first_kd_tree_search(
+        std::move(projected_points),
+        std::numeric_limits<size_t>::max(),
+        params.epsilon,
+        [](const ProjectedPoint<dimensions> &point) -> const Point<dimensions> & { return point.original; });
 }
