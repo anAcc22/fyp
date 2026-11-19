@@ -68,6 +68,17 @@ THEMES = {
             "sweepline": "#F6B56F",
         },
     },
+    "approximations": {
+        "key_colour": "#568A9F",
+        "deep_colour": "#345665",
+        "bound_colour": "#3F8A78",
+        "label_colour": "#E6C384",
+        "value_band_colour": "#C9DCE3",
+        "outline_colour": "#E6C384",
+        "line_colours": {
+            "examine_neighbours_along_chan_shifted_z_order_curves": "#568A9F",
+        },
+    },
 }
 
 INK_COLOUR = "#333333"
@@ -86,7 +97,14 @@ SOLVER_LINES = {
     "parallel_kd_tree": ("Parallel $k$-d tree", "^"),
     "examine_all_pairs": ("Brute force", "v"),
     "examine_all_pairs_in_parallel": ("Parallel brute force", "p"),
+    "examine_neighbours_along_chan_shifted_z_order_curves": ("Chan's shifted Z-order", "o"),
 }
+
+# Proven bounds on y as a function of x: (name, formula).
+BOUNDS = {
+    "chan": ("Chan's bound", lambda d: 4 * d**1.5 + 4 * d**0.5 + 1),
+}
+BOUND_LABEL_ANGLE = 30
 
 # Literata at medium weight, kept in the repo so that figures come out the same on any machine.
 FONT_FOLDER = Path(__file__).parent / "fonts"
@@ -103,10 +121,12 @@ MEAN_LABEL_FONT_SIZE = 8
 HEATMAP_LABEL_FONT_SIZE = 8
 HEATMAP_PALE_COLOUR = "#F3F5EA"
 HEATMAP_OUTLINE_WIDTH = 2
-# As fractions of a cell's (width, height). Cells are wider than tall, so the band's thickness needs both.
-HEATMAP_BAND_OUTER_INSET = (0.025, 0.04)
-HEATMAP_BAND_INNER_INSET = (0.085, 0.145)
+# In points, so the band is equally thick on every side whatever the shape of the cells.
+HEATMAP_BAND_OUTER_INSET_IN_POINTS = 0.7
+HEATMAP_BAND_INNER_INSET_IN_POINTS = 2.4
 EXACT_VALUE_TOLERANCE = 1e-12
+# Tick steps like 0.05 come out a hair off, which would put the top tick just past the axis and get it trimmed.
+TICK_DIGITS = 10
 SAMPLE_ALPHA = 0.5
 SAMPLE_DIAMETER_IN_POINTS = 3.5
 MEAN_BAND_AREA_IN_POINTS = 140
@@ -136,6 +156,8 @@ def read_arguments():
     parser.add_argument("--project", nargs="+", default=[], help="for lines with --log-y: solvers to extend with a dotted line up to the top of the y-axis")
     parser.add_argument("--projection-growth", type=float, help="how many times y multiplies each time x goes up by one")
     parser.add_argument("--y-max", type=float, help="for lines with --log-y: the top of the y-axis")
+    parser.add_argument("--bound", choices=BOUNDS, help="for a swarm: write this proven bound above each x value")
+    parser.add_argument("--doubling-x", action="store_true", help="for a swarm: x doubles along the axis")
     parser.add_argument("--log-y", action="store_true", help="for lines: use a log y-axis, labelled at powers of ten")
     parser.add_argument("--linear-x", action="store_true", help="for lines: use an evenly spaced x-axis, labelled at every other value")
     parser.add_argument("--form", required=True, choices=("swarm", "violin", "heatmap", "dumbbell", "lines"), help="how to show the trials")
@@ -275,12 +297,21 @@ def draw_band_around_means(ax, x_values, y_value, colour):
     ax.scatter(x_values, [y_value] * len(x_values), s=MEAN_BAND_AREA_IN_POINTS, color=colour, linewidth=0, clip_on=False)
 
 
-def draw_double_border(ax, column_index, row_index, band_colour, centre_colour):
+def cell_size_in_points(ax, column_count, row_count):
+    position = ax.get_position()
+    width, height = FIGURE_SIZE_IN_INCHES
+    return position.width * width * 72 / column_count, position.height * height * 72 / row_count
+
+
+def draw_double_border(ax, column_index, row_index, cell_size, band_colour, centre_colour):
     """A band of fill around the cell's own colour, with the white gap between cells left intact."""
-    for (inset_x, inset_y), colour in (
-        (HEATMAP_BAND_OUTER_INSET, band_colour),
-        (HEATMAP_BAND_INNER_INSET, centre_colour),
+    cell_width, cell_height = cell_size
+
+    for inset, colour in (
+        (HEATMAP_BAND_OUTER_INSET_IN_POINTS, band_colour),
+        (HEATMAP_BAND_INNER_INSET_IN_POINTS, centre_colour),
     ):
+        inset_x, inset_y = inset / cell_width, inset / cell_height
         ax.add_patch(
             Rectangle(
                 (column_index + inset_x, row_index + inset_y),
@@ -340,13 +371,16 @@ def draw_heatmap(ax, results, x, row, y, theme, marked_value, outlined_product):
     )
     ax.tick_params(length=0)
     ax.tick_params(axis="y", rotation=0)
+    ax.set_xticklabels([f"{value:g}" for value in means.columns])
+    ax.set_yticklabels([f"{value:g}" for value in means.index])
     ax.invert_yaxis()
 
     scale = Normalize(means.min().min(), means.max().max())
+    cell_size = cell_size_in_points(ax, len(means.columns), len(means.index))
 
     for row_index, column_index in np.argwhere(has_marked_value):
         centre_colour = colours(scale(means.iloc[row_index, column_index]))
-        draw_double_border(ax, column_index, row_index, theme["value_band_colour"], centre_colour)
+        draw_double_border(ax, column_index, row_index, cell_size, theme["value_band_colour"], centre_colour)
 
     if outlined_product is not None:
         draw_outline(ax, np.outer(means.index, means.columns) <= outlined_product, theme["outline_colour"])
@@ -354,9 +388,14 @@ def draw_heatmap(ax, results, x, row, y, theme, marked_value, outlined_product):
 
 def label_first_and_last_means(ax, results, x, y, colour, unlabelled_x_values):
     means = results.groupby(x)[y].mean().sort_index()
+    first, last = means.index[0], means.index[-1]
 
-    x_span = means.index[-1] - means.index[0]
-    ax.set_xlim(means.index[0] - MEAN_LABEL_ROOM * x_span, means.index[-1] + MEAN_LABEL_ROOM * x_span)
+    if ax.get_xscale() == "log":
+        room = (last / first) ** MEAN_LABEL_ROOM
+        ax.set_xlim(first / room, last * room)
+    else:
+        x_span = last - first
+        ax.set_xlim(first - MEAN_LABEL_ROOM * x_span, last + MEAN_LABEL_ROOM * x_span)
 
     for position, sign, alignment in ((0, -1, "right"), (-1, 1, "left")):
         if means.index[position] in unlabelled_x_values:
@@ -375,13 +414,47 @@ def label_first_and_last_means(ax, results, x, y, colour, unlabelled_x_values):
         )
 
 
+def write_bound_above(ax, x_values, bound, colour):
+    """Too far above the data to plot, so each value is written over its column instead."""
+    name, formula = BOUNDS[bound]
+    top = ax.get_ylim()[1]
+
+    for x_value in x_values:
+        ax.annotate(
+            f"{formula(x_value):,.0f}",
+            xy=(x_value, top),
+            xytext=(0, MEAN_LABEL_OFFSET_IN_POINTS),
+            textcoords="offset points",
+            rotation=BOUND_LABEL_ANGLE,
+            rotation_mode="anchor",
+            ha="left",
+            va="bottom",
+            fontsize=MEAN_LABEL_FONT_SIZE,
+            color=colour,
+            annotation_clip=False,
+        )
+
+    ax.annotate(
+        f"{name}:",
+        xy=(ax.get_xlim()[0], top),
+        xytext=(0, MEAN_LABEL_OFFSET_IN_POINTS),
+        textcoords="offset points",
+        ha="right",
+        va="bottom",
+        fontsize=MEAN_LABEL_FONT_SIZE,
+        color=colour,
+        annotation_clip=False,
+    )
+
+
 def keep_trials_within_y_axis(ax, values, y_min):
     """Despine trims the axis to its outermost ticks, so those ticks must lie beyond the data."""
     ticks = ax.get_yticks()
     tick_step = ticks[1] - ticks[0]
 
     bottom = y_min if y_min is not None else math.floor(values.min() / tick_step) * tick_step
-    ax.set_ylim(bottom=bottom, top=math.ceil(values.max() / tick_step) * tick_step)
+    top = math.ceil(values.max() / tick_step) * tick_step
+    ax.set_ylim(bottom=round(bottom, TICK_DIGITS), top=round(top, TICK_DIGITS))
 
 
 def use_doubling_x_axis(ax, x_values):
@@ -427,7 +500,7 @@ def use_powers_of_ten_y_axis(ax, values, y_max):
     ax.set_ylim(10 ** math.floor(math.log10(values.min())), y_max or 10 ** math.ceil(math.log10(values.max())))
     ax.yaxis.set_major_locator(LogLocator(base=10, numticks=20))
     ax.yaxis.set_minor_locator(NullLocator())
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,g}"))
 
 
 def draw_solver_lines(ax, results, x, y, line_colours, linear_x, label_first_x):
@@ -601,6 +674,9 @@ def main():
     else:
         marked_x_values = x_values_where_all_trials_are_marked(results, arguments.x, arguments.y, arguments.mark_value)
 
+        if arguments.doubling_x:
+            ax.set_xscale("log", base=2)
+
         draw_samples(ax, results, arguments.x, arguments.y, arguments.form, theme["key_colour"], arguments.mark_value)
         draw_band_around_means(ax, marked_x_values, arguments.mark_value, theme["label_colour"])
         draw_mean_with_error_bars(ax, results, arguments.x, arguments.y, theme["deep_colour"])
@@ -609,7 +685,14 @@ def main():
         if results[arguments.x].nunique() <= MAX_LABELLED_X_VALUES:
             ax.set_xticks(sorted(results[arguments.x].unique()))
 
+        if arguments.doubling_x:
+            ax.xaxis.set_major_formatter(ScalarFormatter())
+            ax.xaxis.set_minor_locator(NullLocator())
+
         keep_trials_within_y_axis(ax, results[arguments.y], arguments.y_min)
+
+        if arguments.bound is not None:
+            write_bound_above(ax, sorted(results[arguments.x].unique()), arguments.bound, theme["bound_colour"])
         sns.despine(fig=fig, offset=10, trim=True)
 
     ax.set_xlabel(arguments.x_label)

@@ -9,7 +9,15 @@
 \usepackage[breakable]{tcolorbox}
 
 % inline code: type underscores and the like as-is, e.g. \code{std::unordered_map}
-\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\ExplSyntaxOn
+\cs_generate_variant:Nn \tl_replace_all:Nnn { NV }
+\NewDocumentCommand \code { m }
+  {
+    \tl_set:Ne \l_tmpa_tl { \tl_to_str:n {#1} }
+    \tl_replace_all:NVn \l_tmpa_tl \c_underscore_str { \textunderscore \allowbreak }
+    \texttt { \l_tmpa_tl }
+  }
+\ExplSyntaxOff
 
 % let a line stretch a little further rather than push a long \code{} word into the margin
 \setlength{\emergencystretch}{3em}

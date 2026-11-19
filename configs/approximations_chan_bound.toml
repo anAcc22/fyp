@@ -1,0 +1,9 @@
+# Chan's shifted Z-order as d grows, to compare the measured ratio against the proven bound.
+
+dimensions     = [2, 4, 8, 16, 32, 64, 128, 256]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name = "examine_neighbours_along_chan_shifted_z_order_curves"

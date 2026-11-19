@@ -104,3 +104,25 @@ $python plot.py \
     --x-label 'Dimensions ($d$)' --y-label 'Normalised score' --y-min 0.84 --y-step 0.04 \
     --form lines --theme heuristics \
     --out paper/diagrams/heuristics_comparison.pdf
+
+# Chapter 5: Approximations
+
+# Fig 5.1: Chan's shifted Z-order as d grows, from d = 2 to 256. Laid out like Fig 4.5, on a doubling x-axis. The bound
+# 4d^(3/2) + 4d^(1/2) + 1 is far too high to plot (16,449 at d = 256, against a mean ratio under 1.05), so it is written
+# above each column instead. Every trial is exact up to d = 8. d = 256 takes about a minute a trial.
+$python plot.py \
+    --data data/approximations_chan_bound.csv \
+    --x dimensions --y ratio --bound chan \
+    --x-label 'Dimensions ($d$)' --y-label 'Ratio' --y-min 1 --mark-value 1 --doubling-x \
+    --form swarm --theme approximations \
+    --out paper/diagrams/approximations_chan_bound.pdf
+
+# Fig 5.2: the (1+ε) k-d tree at d = 2 to 20 and ε = 0.5 to 64, laid out like Fig 4.2. Mean ratio for each d and ε, and
+# a cell marked 1 was exact in every trial. The worst mean is 1.06 against a promise of up to 65. Takes about a minute and
+# a half when split by d across parallel runs.
+$python plot.py \
+    --data data/approximations_kd_tree_ratio.csv \
+    --x epsilon --row dimensions --y ratio \
+    --x-label 'Allowed error ($\varepsilon$)' --y-label 'Dimensions ($d$)' --mark-value 1 \
+    --form heatmap --theme approximations \
+    --out paper/diagrams/approximations_kd_tree_ratio.pdf

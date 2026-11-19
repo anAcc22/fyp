@@ -1,0 +1,10 @@
+# The (1+ε) k-d tree's ratio for each d and ε, to compare against the promised 1 + ε.
+
+dimensions     = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+point_counts   = [10000]
+trial_count    = 30
+relative_check = true
+
+[[solvers]]
+name    = "approximate_best_first_kd_tree"
+epsilon = [0.5, 1, 2, 4, 8, 16, 32, 64]
